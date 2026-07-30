@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ExpensesRouteImport } from './routes/expenses'
 import { Route as InventoryRouteImport } from './routes/inventory'
+import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as StaffRouteImport } from './routes/staff'
 import { Route as ClassesIndexRouteImport } from './routes/classes.index'
 import { Route as ClassesClassIdRouteImport } from './routes/classes.$classId'
@@ -40,6 +41,11 @@ const ExpensesRoute = ExpensesRouteImport.update({
 const InventoryRoute = InventoryRouteImport.update({
   id: '/inventory',
   path: '/inventory',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StaffRoute = StaffRouteImport.update({
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/expenses': typeof ExpensesRoute
   '/inventory': typeof InventoryRoute
+  '/reports': typeof ReportsRoute
   '/staff': typeof StaffRoute
   '/classes/$classId': typeof ClassesClassIdRoute
   '/finance/record-payment': typeof FinanceRecordPaymentRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/expenses': typeof ExpensesRoute
   '/inventory': typeof InventoryRoute
+  '/reports': typeof ReportsRoute
   '/staff': typeof StaffRoute
   '/classes/$classId': typeof ClassesClassIdRoute
   '/finance/record-payment': typeof FinanceRecordPaymentRoute
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/expenses': typeof ExpensesRoute
   '/inventory': typeof InventoryRoute
+  '/reports': typeof ReportsRoute
   '/staff': typeof StaffRoute
   '/classes/$classId': typeof ClassesClassIdRoute
   '/finance/record-payment': typeof FinanceRecordPaymentRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/expenses'
     | '/inventory'
+    | '/reports'
     | '/staff'
     | '/classes/$classId'
     | '/finance/record-payment'
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/expenses'
     | '/inventory'
+    | '/reports'
     | '/staff'
     | '/classes/$classId'
     | '/finance/record-payment'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/expenses'
     | '/inventory'
+    | '/reports'
     | '/staff'
     | '/classes/$classId'
     | '/finance/record-payment'
@@ -176,6 +188,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   ExpensesRoute: typeof ExpensesRoute
   InventoryRoute: typeof InventoryRoute
+  ReportsRoute: typeof ReportsRoute
   StaffRoute: typeof StaffRoute
   ClassesClassIdRoute: typeof ClassesClassIdRoute
   FinanceRecordPaymentRoute: typeof FinanceRecordPaymentRoute
@@ -214,6 +227,13 @@ declare module '@tanstack/react-router' {
       path: '/inventory'
       fullPath: '/inventory'
       preLoaderRoute: typeof InventoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/staff': {
@@ -280,6 +300,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   ExpensesRoute: ExpensesRoute,
   InventoryRoute: InventoryRoute,
+  ReportsRoute: ReportsRoute,
   StaffRoute: StaffRoute,
   ClassesClassIdRoute: ClassesClassIdRoute,
   FinanceRecordPaymentRoute: FinanceRecordPaymentRoute,
