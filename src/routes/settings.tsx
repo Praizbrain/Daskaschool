@@ -32,6 +32,8 @@ export const Route = createFileRoute("/settings")({
 function SettingsPage() {
   const search = Route.useSearch();
   const tab: (typeof TABS)[number] = search.tab ?? "school";
+  const navigate = Route.useNavigate();
+
 
 
   return (
