@@ -14,6 +14,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ExpensesRouteImport } from './routes/expenses'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StaffRouteImport } from './routes/staff'
 import { Route as TargetsRouteImport } from './routes/targets'
 import { Route as ClassesIndexRouteImport } from './routes/classes.index'
@@ -47,6 +48,11 @@ const InventoryRoute = InventoryRouteImport.update({
 const ReportsRoute = ReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StaffRoute = StaffRouteImport.update({
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/expenses': typeof ExpensesRoute
   '/inventory': typeof InventoryRoute
   '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
   '/staff': typeof StaffRoute
   '/targets': typeof TargetsRoute
   '/classes/$classId': typeof ClassesClassIdRoute
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/expenses': typeof ExpensesRoute
   '/inventory': typeof InventoryRoute
   '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
   '/staff': typeof StaffRoute
   '/targets': typeof TargetsRoute
   '/classes/$classId': typeof ClassesClassIdRoute
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/expenses': typeof ExpensesRoute
   '/inventory': typeof InventoryRoute
   '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
   '/staff': typeof StaffRoute
   '/targets': typeof TargetsRoute
   '/classes/$classId': typeof ClassesClassIdRoute
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/expenses'
     | '/inventory'
     | '/reports'
+    | '/settings'
     | '/staff'
     | '/targets'
     | '/classes/$classId'
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/expenses'
     | '/inventory'
     | '/reports'
+    | '/settings'
     | '/staff'
     | '/targets'
     | '/classes/$classId'
@@ -184,6 +195,7 @@ export interface FileRouteTypes {
     | '/expenses'
     | '/inventory'
     | '/reports'
+    | '/settings'
     | '/staff'
     | '/targets'
     | '/classes/$classId'
@@ -201,6 +213,7 @@ export interface RootRouteChildren {
   ExpensesRoute: typeof ExpensesRoute
   InventoryRoute: typeof InventoryRoute
   ReportsRoute: typeof ReportsRoute
+  SettingsRoute: typeof SettingsRoute
   StaffRoute: typeof StaffRoute
   TargetsRoute: typeof TargetsRoute
   ClassesClassIdRoute: typeof ClassesClassIdRoute
@@ -247,6 +260,13 @@ declare module '@tanstack/react-router' {
       path: '/reports'
       fullPath: '/reports'
       preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/staff': {
@@ -321,6 +341,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExpensesRoute: ExpensesRoute,
   InventoryRoute: InventoryRoute,
   ReportsRoute: ReportsRoute,
+  SettingsRoute: SettingsRoute,
   StaffRoute: StaffRoute,
   TargetsRoute: TargetsRoute,
   ClassesClassIdRoute: ClassesClassIdRoute,

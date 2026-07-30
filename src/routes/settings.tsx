@@ -30,8 +30,9 @@ export const Route = createFileRoute("/settings")({
 });
 
 function SettingsPage() {
-  const { tab = "school" } = Route.useSearch();
-  const navigate = Route.useNavigate();
+  const search = Route.useSearch();
+  const tab: (typeof TABS)[number] = search.tab ?? "school";
+
 
   return (
     <AppShell>
