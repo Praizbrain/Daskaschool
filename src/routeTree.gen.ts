@@ -15,6 +15,7 @@ import { Route as ExpensesRouteImport } from './routes/expenses'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as StaffRouteImport } from './routes/staff'
+import { Route as TargetsRouteImport } from './routes/targets'
 import { Route as ClassesIndexRouteImport } from './routes/classes.index'
 import { Route as ClassesClassIdRouteImport } from './routes/classes.$classId'
 import { Route as FinanceIndexRouteImport } from './routes/finance.index'
@@ -51,6 +52,11 @@ const ReportsRoute = ReportsRouteImport.update({
 const StaffRoute = StaffRouteImport.update({
   id: '/staff',
   path: '/staff',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TargetsRoute = TargetsRouteImport.update({
+  id: '/targets',
+  path: '/targets',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClassesIndexRoute = ClassesIndexRouteImport.update({
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/inventory': typeof InventoryRoute
   '/reports': typeof ReportsRoute
   '/staff': typeof StaffRoute
+  '/targets': typeof TargetsRoute
   '/classes/$classId': typeof ClassesClassIdRoute
   '/finance/record-payment': typeof FinanceRecordPaymentRoute
   '/students/$studentId': typeof StudentsStudentIdRoute
@@ -111,6 +118,7 @@ export interface FileRoutesByTo {
   '/inventory': typeof InventoryRoute
   '/reports': typeof ReportsRoute
   '/staff': typeof StaffRoute
+  '/targets': typeof TargetsRoute
   '/classes/$classId': typeof ClassesClassIdRoute
   '/finance/record-payment': typeof FinanceRecordPaymentRoute
   '/students/$studentId': typeof StudentsStudentIdRoute
@@ -127,6 +135,7 @@ export interface FileRoutesById {
   '/inventory': typeof InventoryRoute
   '/reports': typeof ReportsRoute
   '/staff': typeof StaffRoute
+  '/targets': typeof TargetsRoute
   '/classes/$classId': typeof ClassesClassIdRoute
   '/finance/record-payment': typeof FinanceRecordPaymentRoute
   '/students/$studentId': typeof StudentsStudentIdRoute
@@ -144,6 +153,7 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/reports'
     | '/staff'
+    | '/targets'
     | '/classes/$classId'
     | '/finance/record-payment'
     | '/students/$studentId'
@@ -159,6 +169,7 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/reports'
     | '/staff'
+    | '/targets'
     | '/classes/$classId'
     | '/finance/record-payment'
     | '/students/$studentId'
@@ -174,6 +185,7 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/reports'
     | '/staff'
+    | '/targets'
     | '/classes/$classId'
     | '/finance/record-payment'
     | '/students/$studentId'
@@ -190,6 +202,7 @@ export interface RootRouteChildren {
   InventoryRoute: typeof InventoryRoute
   ReportsRoute: typeof ReportsRoute
   StaffRoute: typeof StaffRoute
+  TargetsRoute: typeof TargetsRoute
   ClassesClassIdRoute: typeof ClassesClassIdRoute
   FinanceRecordPaymentRoute: typeof FinanceRecordPaymentRoute
   StudentsStudentIdRoute: typeof StudentsStudentIdRoute
@@ -241,6 +254,13 @@ declare module '@tanstack/react-router' {
       path: '/staff'
       fullPath: '/staff'
       preLoaderRoute: typeof StaffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/targets': {
+      id: '/targets'
+      path: '/targets'
+      fullPath: '/targets'
+      preLoaderRoute: typeof TargetsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/classes/': {
@@ -302,6 +322,7 @@ const rootRouteChildren: RootRouteChildren = {
   InventoryRoute: InventoryRoute,
   ReportsRoute: ReportsRoute,
   StaffRoute: StaffRoute,
+  TargetsRoute: TargetsRoute,
   ClassesClassIdRoute: ClassesClassIdRoute,
   FinanceRecordPaymentRoute: FinanceRecordPaymentRoute,
   StudentsStudentIdRoute: StudentsStudentIdRoute,
