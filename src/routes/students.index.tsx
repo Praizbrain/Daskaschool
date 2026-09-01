@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Download, Filter, Plus, Search, UserX } from "lucide-react";
+import { Filter, Plus, Search, UserX } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/fin/app-shell";
 import {
   EmptyState,
@@ -11,7 +12,8 @@ import {
   StatusBadge,
   paymentTone,
 } from "@/components/fin/primitives";
-import { CLASSES, STUDENTS, naira, outstanding } from "@/lib/school-data";
+import { naira } from "@/lib/school-data";
+import { useStudents } from "@/hooks/use-students";
 
 export const Route = createFileRoute("/students/")({
   head: () => ({
@@ -22,50 +24,78 @@ export const Route = createFileRoute("/students/")({
         content:
           "Search students, view outstanding balances and payment status across every class at Divine Sources Praiseland High School.",
       },
-      { property: "og:title", content: "Students — Divine Sources Finance OS" },
-      {
-        property: "og:description",
-        content: "Student register with fees, discounts, balances and payment status.",
-      },
     ],
   }),
   component: StudentsPage,
 });
 
 const STATUSES = ["All", "Paid", "Part Payment", "Owing"] as const;
+const PAGE_SIZE = 20;
 
 function StudentsPage() {
+  const { data: students, isLoading, error } = useStudents();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<(typeof STATUSES)[number]>("All");
   const [klass, setKlass] = useState("All classes");
+  const [page, setPage] = useState(1);
 
-  const rows = useMemo(
-    () =>
-      STUDENTS.filter((s) => {
-        const q = query.trim().toLowerCase();
-        const matchQuery =
-          !q ||
-          s.name.toLowerCase().includes(q) ||
-          s.guardian.toLowerCase().includes(q) ||
-          s.admissionNo.toLowerCase().includes(q);
-        const matchStatus = status === "All" || s.status === status;
-        const matchClass = klass === "All classes" || s.className === klass;
-        return matchQuery && matchStatus && matchClass;
-      }),
-    [query, status, klass],
-  );
+  const classOptions = useMemo(() => {
+    if (!students) return [];
+    return Array.from(new Set(students.map((s) => s.className))).sort();
+  }, [students]);
 
-  const totalOutstanding = rows.reduce((sum, s) => sum + outstanding(s), 0);
+  const rows = useMemo(() => {
+    if (!students) return [];
+    const q = query.trim().toLowerCase();
+    return students.filter((s) => {
+      const matchQuery =
+        !q ||
+        s.name.toLowerCase().includes(q) ||
+        s.guardian.toLowerCase().includes(q) ||
+        s.admissionNo.toLowerCase().includes(q);
+      const matchStatus = status === "All" || s.status === status;
+      const matchClass = klass === "All classes" || s.className === klass;
+      return matchQuery && matchStatus && matchClass;
+    });
+  }, [students, query, status, klass]);
+
+  const totalOutstanding = rows.reduce((sum, s) => sum + s.outstanding, 0);
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  if (isLoading) {
+    return (
+      <AppShell>
+        <div className="flex min-h-[300px] items-center justify-center">
+          <p className="text-sm text-muted-foreground">Loading students…</p>
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (error || !students) {
+    return (
+      <AppShell>
+        <div className="flex min-h-[300px] flex-col items-center justify-center gap-2 text-center">
+          <p className="text-sm font-semibold text-destructive">Couldn't load students.</p>
+          <p className="text-xs text-muted-foreground">Please refresh the page.</p>
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>
       <PageHeader
         title="Students"
-        subtitle={`${STUDENTS.length} enrolled · ${naira(totalOutstanding)} outstanding in current view`}
+        subtitle={`${students.length} enrolled · ${naira(totalOutstanding)} outstanding in current view`}
         actions={
           <>
-            <button className="flex h-11 items-center gap-2 rounded-md border border-border bg-card px-4 text-sm font-semibold transition-colors hover:bg-muted">
-              <Download className="size-4" /> Export
+            <button
+              onClick={() => toast.info("Export is coming with the Reports phase.")}
+              className="flex h-11 items-center gap-2 rounded-md border border-border bg-card px-4 text-sm font-semibold transition-colors hover:bg-muted"
+            >
+              Export
             </button>
             <Link
               to="/students/new"
@@ -83,7 +113,10 @@ function StudentsPage() {
             <Search className="pointer-events-none absolute left-3.5 size-4 text-muted-foreground" />
             <input
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setPage(1);
+              }}
               placeholder="Search by student, guardian or admission number"
               className="h-11 w-full rounded-md border border-input bg-background pl-10 pr-4 text-sm outline-none transition-colors focus:border-primary"
             />
@@ -91,12 +124,15 @@ function StudentsPage() {
 
           <select
             value={klass}
-            onChange={(e) => setKlass(e.target.value)}
+            onChange={(e) => {
+              setKlass(e.target.value);
+              setPage(1);
+            }}
             className="h-11 rounded-md border border-input bg-background px-4 text-sm outline-none focus:border-primary"
           >
             <option>All classes</option>
-            {CLASSES.map((c) => (
-              <option key={c.id}>{c.name}</option>
+            {classOptions.map((c) => (
+              <option key={c}>{c}</option>
             ))}
           </select>
 
@@ -105,9 +141,14 @@ function StudentsPage() {
             {STATUSES.map((s) => (
               <button
                 key={s}
-                onClick={() => setStatus(s)}
+                onClick={() => {
+                  setStatus(s);
+                  setPage(1);
+                }}
                 className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  status === s ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+                  status === s
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted"
                 }`}
               >
                 {s}
@@ -121,19 +162,33 @@ function StudentsPage() {
         {rows.length === 0 ? (
           <EmptyState
             icon={<UserX className="size-5" />}
-            title="No students match your filters"
-            description="Try a different class, payment status or search term."
+            title={students.length === 0 ? "No students yet" : "No students match your filters"}
+            description={
+              students.length === 0
+                ? "Add your first student to get started."
+                : "Try a different class, payment status or search term."
+            }
             action={
-              <button
-                onClick={() => {
-                  setQuery("");
-                  setStatus("All");
-                  setKlass("All classes");
-                }}
-                className="rounded-md border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted"
-              >
-                Clear filters
-              </button>
+              students.length === 0 ? (
+                <Link
+                  to="/students/new"
+                  className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground"
+                >
+                  Add student
+                </Link>
+              ) : (
+                <button
+                  onClick={() => {
+                    setQuery("");
+                    setStatus("All");
+                    setKlass("All classes");
+                    setPage(1);
+                  }}
+                  className="rounded-md border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted"
+                >
+                  Clear filters
+                </button>
+              )
             }
           />
         ) : (
@@ -141,18 +196,20 @@ function StudentsPage() {
             <table className="w-full min-w-[900px] text-sm">
               <thead>
                 <tr className="border-b border-border text-left">
-                  {["Student", "Class", "Guardian", "Outstanding balance", "Status", ""].map((h) => (
-                    <th
-                      key={h}
-                      className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-                    >
-                      {h}
-                    </th>
-                  ))}
+                  {["Student", "Class", "Guardian", "Outstanding balance", "Status", ""].map(
+                    (h) => (
+                      <th
+                        key={h}
+                        className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                      >
+                        {h}
+                      </th>
+                    ),
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {rows.map((s) => (
+                {pageRows.map((s) => (
                   <tr key={s.id} className="transition-colors hover:bg-muted/60">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -173,9 +230,11 @@ function StudentsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <Money
-                        value={outstanding(s)}
+                        value={s.outstanding}
                         className={
-                          outstanding(s) > 0 ? "font-bold text-destructive" : "font-bold text-success"
+                          s.outstanding > 0
+                            ? "font-bold text-destructive"
+                            : "font-bold text-success"
                         }
                       />
                     </td>
@@ -207,29 +266,34 @@ function StudentsPage() {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border px-6 py-4">
-          <p className="text-xs text-muted-foreground">
-            Showing {rows.length} of {STUDENTS.length} students
-          </p>
-          <div className="flex items-center gap-1">
-            <button className="flex size-9 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-muted">
-              <ChevronLeft className="size-4" />
-            </button>
-            {[1, 2, 3].map((p) => (
-              <button
-                key={p}
-                className={`size-9 rounded-md text-xs font-semibold ${
-                  p === 1 ? "bg-primary text-primary-foreground" : "border border-border hover:bg-muted"
-                }`}
-              >
-                {p}
-              </button>
-            ))}
-            <button className="flex size-9 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-muted">
-              <ChevronRight className="size-4" />
-            </button>
+        {rows.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border px-6 py-4">
+            <p className="text-xs text-muted-foreground">
+              Showing {pageRows.length} of {rows.length} students
+            </p>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="flex h-9 items-center rounded-md border border-border px-3 text-xs font-semibold text-muted-foreground hover:bg-muted disabled:opacity-40"
+                >
+                  Previous
+                </button>
+                <span className="px-2 text-xs text-muted-foreground">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="flex h-9 items-center rounded-md border border-border px-3 text-xs font-semibold text-muted-foreground hover:bg-muted disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </Panel>
     </AppShell>
   );

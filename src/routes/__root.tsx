@@ -13,7 +13,6 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "../components/ui/sonner";
 
-
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -79,7 +78,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Divine Sources Finance OS — School Finance & Operations" },
+      { title: "Divine Sources Finance OS â€” School Finance & Operations" },
       {
         name: "description",
         content:
@@ -136,4 +135,3 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
-

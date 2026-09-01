@@ -1,5 +1,9 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { supabase } from "@/lib/supabase-client";
 import { School, Eye, EyeOff, ShieldCheck, ArrowRight } from "lucide-react";
 import { SCHOOL } from "@/lib/school-data";
 import { naira } from "@/lib/school-data";
@@ -23,9 +27,50 @@ export const Route = createFileRoute("/")({
   component: LoginPage,
 });
 
+const loginSchema = z.object({
+  email: z.string().min(1, "Email is required").email("Enter a valid email address"),
+  password: z.string().min(1, "Password is required"),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+
 function LoginPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onSubmit = async (values: LoginFormValues) => {
+    setAuthError(null);
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      });
+
+      if (error) {
+        setAuthError("That email or password isn't right. Please try again.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      navigate({ to: "/dashboard" });
+    } catch (err) {
+      console.error("[routes/index/onSubmit]", err);
+      setAuthError("Something went wrong signing you in. Please try again.");
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -47,13 +92,13 @@ function LoginPage() {
             <span className="font-medium text-foreground">{SCHOOL.name}</span>.
           </p>
 
-          <form
-            className="mt-10 space-y-6"
-            onSubmit={(e) => {
-              e.preventDefault();
-              navigate({ to: "/dashboard" });
-            }}
-          >
+          <form className="mt-10 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+            {authError && (
+              <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                {authError}
+              </div>
+            )}
+
             <div>
               <label htmlFor="email" className="text-sm font-semibold">
                 Email address
@@ -61,9 +106,13 @@ function LoginPage() {
               <input
                 id="email"
                 type="email"
-                defaultValue="grace@divinesources.ng"
+                autoComplete="email"
+                {...register("email")}
                 className="mt-2 h-12 w-full rounded-md border border-input bg-card px-4 text-sm outline-none transition-colors focus:border-primary"
               />
+              {errors.email && (
+                <p className="mt-1.5 text-xs text-destructive">{errors.email.message}</p>
+              )}
             </div>
 
             <div>
@@ -74,7 +123,8 @@ function LoginPage() {
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  defaultValue="divinesources"
+                  autoComplete="current-password"
+                  {...register("password")}
                   className="h-12 w-full rounded-md border border-input bg-card px-4 pr-12 text-sm outline-none transition-colors focus:border-primary"
                 />
                 <button
@@ -83,30 +133,24 @@ function LoginPage() {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
                   aria-label="Toggle password visibility"
                 >
-                  {showPassword ? <EyeOff className="size-[18px]" /> : <Eye className="size-[18px]" />}
+                  {showPassword ? (
+                    <EyeOff className="size-[18px]" />
+                  ) : (
+                    <Eye className="size-[18px]" />
+                  )}
                 </button>
               </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2.5 text-sm text-muted-foreground">
-                <input
-                  type="checkbox"
-                  defaultChecked
-                  className="size-4 accent-[color:var(--primary)]"
-                />
-                Remember me
-              </label>
-              <Link to="/" className="text-sm font-semibold text-primary hover:underline">
-                Forgot password?
-              </Link>
+              {errors.password && (
+                <p className="mt-1.5 text-xs text-destructive">{errors.password.message}</p>
+              )}
             </div>
 
             <button
               type="submit"
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-primary text-sm font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary-deep"
+              disabled={isSubmitting}
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-primary text-sm font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary-deep disabled:opacity-60"
             >
-              Sign in <ArrowRight className="size-4" />
+              {isSubmitting ? "Signing in…" : "Sign in"} <ArrowRight className="size-4" />
             </button>
           </form>
 
@@ -127,10 +171,25 @@ function LoginPage() {
           </h2>
 
           <div className="mt-10 space-y-4">
-            <IllustrationCard label="Expected revenue this term" value={naira(48_650_000)} bar={100} tone="primary" />
-            <IllustrationCard label="Collected so far" value={naira(33_420_000)} bar={69} tone="primary" />
+            <IllustrationCard
+              label="Expected revenue this term"
+              value={naira(48_650_000)}
+              bar={100}
+              tone="primary"
+            />
+            <IllustrationCard
+              label="Collected so far"
+              value={naira(33_420_000)}
+              bar={69}
+              tone="primary"
+            />
             <IllustrationCard label="Outstanding" value={naira(15_230_000)} bar={31} tone="gold" />
-            <IllustrationCard label="Estimated net profit" value={naira(14_240_000)} bar={48} tone="olive" />
+            <IllustrationCard
+              label="Estimated net profit"
+              value={naira(14_240_000)}
+              bar={48}
+              tone="olive"
+            />
           </div>
 
           <div className="mt-10 flex items-end gap-2">

@@ -130,6 +130,7 @@ export function StatusBadge({
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function paymentTone(status: string): BadgeTone {
   if (status === "Paid") return "success";
   if (status === "Part Payment") return "warning";
@@ -180,7 +181,10 @@ export function ProgressRing({
   const c = 2 * Math.PI * r;
   const offset = c - (Math.min(value, 100) / 100) * c;
   return (
-    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+    <div
+      className="relative inline-flex items-center justify-center"
+      style={{ width: size, height: size }}
+    >
       <svg width={size} height={size} className="-rotate-90">
         <circle
           cx={size / 2}
@@ -205,7 +209,11 @@ export function ProgressRing({
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="num text-4xl font-bold">{value}%</span>
-        {label && <span className="mt-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>}
+        {label && (
+          <span className="mt-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {label}
+          </span>
+        )}
         {caption && <span className="mt-2 num text-xs text-muted-foreground">{caption}</span>}
       </div>
     </div>
@@ -221,13 +229,7 @@ const AVATAR_TONES = [
   "bg-success-soft text-success",
 ];
 
-export function InitialAvatar({
-  name,
-  size = "md",
-}: {
-  name: string;
-  size?: "sm" | "md" | "lg";
-}) {
+export function InitialAvatar({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
   const initials = name
     .replace(/^(Mr\.|Mrs\.|Miss|Dr\.|Pastor|Alhaji|Mal\.)\s*/i, "")
     .split(" ")
