@@ -1,10 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
+import * as React from "react";
 import { useState } from "react";
-import { Paperclip, Plus, X } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Plus, Receipt, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/fin/app-shell";
-import { MetricCard, Money, PageHeader, Panel, StatusBadge } from "@/components/fin/primitives";
-import { EXPENSES, EXPENSE_CATEGORIES, FINANCE, naira } from "@/lib/school-data";
+import {
+  EmptyState,
+  MetricCard,
+  Money,
+  PageHeader,
+  Panel,
+  ProgressBar,
+  StatusBadge,
+} from "@/components/fin/primitives";
+import { PageLoadingSkeleton } from "@/components/fin/loading-skeleton";
+import { naira } from "@/lib/school-data";
+import { useAuth } from "@/hooks/use-auth";
+import { useClasses } from "@/hooks/use-classes";
+import { useCreateExpense, useExpenses, useExpenseSummary } from "@/hooks/use-expenses";
+import { EXPENSE_CATEGORIES, type CreateExpenseInput } from "@/lib/expenses-data";
 
 export const Route = createFileRoute("/expenses")({
   head: () => ({
@@ -12,139 +29,327 @@ export const Route = createFileRoute("/expenses")({
       { title: "Expenses — Divine Sources Finance OS" },
       {
         name: "description",
-        content: "Record and review school expenses by category, payee and payment method for the current term.",
+        content: "Record and review school expenses — salaries, utilities, maintenance and more.",
       },
-      { property: "og:title", content: "Expenses — Divine Sources Finance OS" },
-      { property: "og:description", content: "Every school expense in one place, with receipts attached." },
     ],
   }),
   component: ExpensesPage,
 });
 
+const schema = z.object({
+  category: z.enum(EXPENSE_CATEGORIES),
+  classId: z.string().optional(),
+  amount: z.coerce.number().min(1, "Enter a positive amount"),
+  description: z.string().optional(),
+  paidTo: z.string().optional(),
+  method: z.enum(["Cash", "Transfer", "POS"]),
+});
+
+type FormValues = z.infer<typeof schema>;
+
 function ExpensesPage() {
-  const [open, setOpen] = useState(false);
+  const { profile } = useAuth();
+  const { data: expenses, isLoading: expensesLoading } = useExpenses();
+  const { data: summary, isLoading: summaryLoading } = useExpenseSummary();
+  const { data: classes } = useClasses();
+  const createExpense = useCreateExpense();
+  const [showForm, setShowForm] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const isLoading = expensesLoading || summaryLoading;
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { method: "Transfer", category: "Miscellaneous" },
+  });
+
+  const onSubmit = async (values: FormValues) => {
+    if (!profile) return;
+    try {
+      await createExpense.mutateAsync({
+        input: values as CreateExpenseInput,
+        addedBy: profile.id,
+      });
+      toast.success("Expense recorded", {
+        description: `${naira(values.amount)} logged under ${values.category}.`,
+      });
+      reset();
+      setShowForm(false);
+    } catch (err) {
+      console.error("[expenses/onSubmit]", err);
+      toast.error("Couldn't save this expense. Please try again.");
+    }
+  };
+
+  const filtered = (expenses ?? []).filter(
+    (e) =>
+      !search ||
+      e.description.toLowerCase().includes(search.toLowerCase()) ||
+      e.category.toLowerCase().includes(search.toLowerCase()) ||
+      e.paidTo.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / 20));
+
+  if (isLoading) {
+    return (
+      <AppShell>
+        <PageLoadingSkeleton metricCards={3} />
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>
       <PageHeader
         title="Expenses"
-        subtitle="Each expense recorded here reduces estimated profit immediately"
+        subtitle={`${expenses?.length ?? 0} recorded · ${naira(summary?.totalThisTerm ?? 0)} this term`}
         actions={
           <button
-            onClick={() => setOpen(true)}
-            className="flex h-12 items-center gap-2 rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-soft hover:bg-primary-deep"
+            onClick={() => setShowForm((s) => !s)}
+            className="flex h-11 items-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary-deep"
           >
-            <Plus className="size-4" /> Add expense
+            <Plus className="size-4" /> {showForm ? "Cancel" : "Add expense"}
           </button>
         }
       />
 
-      <div className="mt-8 grid gap-5 sm:grid-cols-3">
-        <MetricCard label="Expenses this term" value={naira(FINANCE.totalExpenses)} tone="danger" />
-        <MetricCard label="Payroll portion" value={naira(FINANCE.salaries)} hint="Teaching and support staff" />
-        <MetricCard label="Today's expenses" value={naira(FINANCE.todayExpenses)} hint="1 record today" />
-      </div>
-
-      <Panel className="mt-6" title="Expense ledger" description="Most recent first" bodyClassName="p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-sm">
-            <thead>
-              <tr className="border-b border-border text-left">
-                {["Reference", "Date", "Category", "Description", "Paid to", "Method", "Amount"].map((h) => (
-                  <th key={h} className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {EXPENSES.map((e) => (
-                <tr key={e.id} className="hover:bg-muted/60">
-                  <td className="num px-6 py-4 font-semibold">{e.id}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{e.date}</td>
-                  <td className="px-6 py-4"><StatusBadge tone="primary">{e.category}</StatusBadge></td>
-                  <td className="px-6 py-4">{e.desc}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{e.paidTo}</td>
-                  <td className="px-6 py-4"><StatusBadge>{e.method}</StatusBadge></td>
-                  <td className="px-6 py-4"><Money value={e.amount} className="font-bold" /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Summary cards */}
+      {summary && summary.byCategory.length > 0 && (
+        <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          <MetricCard
+            label="Total expenses this term"
+            value={naira(summary.totalThisTerm)}
+            tone="danger"
+          />
+          {summary.byCategory.slice(0, 2).map((c) => (
+            <MetricCard key={c.category} label={c.category} value={naira(c.total)} />
+          ))}
         </div>
-      </Panel>
+      )}
 
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 p-4">
-          <div className="w-full max-w-2xl rounded-lg border border-border bg-card shadow-lift">
-            <header className="flex items-center justify-between border-b border-border px-6 py-5">
-              <div>
-                <h2 className="text-base font-semibold">Add expense</h2>
-                <p className="mt-1 text-xs text-muted-foreground">This will reduce estimated profit</p>
-              </div>
-              <button onClick={() => setOpen(false)} className="rounded-md p-2 text-muted-foreground hover:bg-muted">
-                <X className="size-4" />
-              </button>
-            </header>
+      {/* Breakdown by category */}
+      {summary && summary.byCategory.length > 0 && (
+        <Panel className="mt-6" title="Breakdown by category" bodyClassName="p-0">
+          <div className="divide-y divide-border">
+            {summary.byCategory.map((c) => {
+              const pct =
+                summary.totalThisTerm > 0 ? Math.round((c.total / summary.totalThisTerm) * 100) : 0;
+              return (
+                <div key={c.category} className="flex items-center gap-6 px-6 py-4">
+                  <p className="w-36 shrink-0 text-sm font-semibold">{c.category}</p>
+                  <ProgressBar value={pct} className="flex-1" />
+                  <span className="num w-10 shrink-0 text-right text-xs font-semibold text-muted-foreground">
+                    {pct}%
+                  </span>
+                  <Money
+                    value={c.total}
+                    className="w-28 shrink-0 text-right text-sm font-semibold"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </Panel>
+      )}
 
-            <div className="grid gap-5 p-6 sm:grid-cols-2">
-              <label className="block">
+      {/* Add expense form */}
+      {showForm && (
+        <Panel className="mt-6" title="Record an expense" bodyClassName="p-6">
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="block">
                 <span className="text-sm font-semibold">Category</span>
-                <select className="mt-2 h-12 w-full rounded-md border border-input bg-background px-4 text-sm outline-none focus:border-primary">
+                <select
+                  {...register("category")}
+                  className="mt-2 h-12 w-full rounded-md border border-input bg-background px-4 text-sm outline-none focus:border-primary"
+                >
                   {EXPENSE_CATEGORIES.map((c) => (
-                    <option key={c}>{c}</option>
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
                   ))}
                 </select>
-              </label>
-              <label className="block">
-                <span className="text-sm font-semibold">Amount</span>
-                <input placeholder="₦ 0" className="num mt-2 h-12 w-full rounded-md border border-input bg-background px-4 text-sm outline-none focus:border-primary" />
-              </label>
-              <label className="block sm:col-span-2">
-                <span className="text-sm font-semibold">Description</span>
-                <input placeholder="e.g. Diesel for generator" className="mt-2 h-12 w-full rounded-md border border-input bg-background px-4 text-sm outline-none focus:border-primary" />
-              </label>
-              <label className="block">
-                <span className="text-sm font-semibold">Date</span>
-                <input placeholder="20 / 02 / 2026" className="mt-2 h-12 w-full rounded-md border border-input bg-background px-4 text-sm outline-none focus:border-primary" />
-              </label>
-              <label className="block">
-                <span className="text-sm font-semibold">Paid to</span>
-                <input placeholder="Vendor or staff name" className="mt-2 h-12 w-full rounded-md border border-input bg-background px-4 text-sm outline-none focus:border-primary" />
-              </label>
-              <label className="block">
-                <span className="text-sm font-semibold">Payment method</span>
-                <select className="mt-2 h-12 w-full rounded-md border border-input bg-background px-4 text-sm outline-none focus:border-primary">
-                  <option>Cash</option>
-                  <option>Transfer</option>
-                  <option>POS</option>
-                </select>
-              </label>
+              </div>
+
               <div className="block">
-                <span className="text-sm font-semibold">Attachment</span>
-                <button className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-md border border-dashed border-border text-sm font-semibold text-muted-foreground hover:bg-muted">
-                  <Paperclip className="size-4" /> Attach receipt
-                </button>
+                <span className="text-sm font-semibold">
+                  Class (optional — leave blank for school-wide)
+                </span>
+                <select
+                  {...register("classId")}
+                  className="mt-2 h-12 w-full rounded-md border border-input bg-background px-4 text-sm outline-none focus:border-primary"
+                >
+                  <option value="">School-wide (no specific class)</option>
+                  {(classes ?? []).map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <ExpenseField
+                label="Amount (₦)"
+                type="number"
+                step="any"
+                error={errors.amount?.message}
+                {...register("amount")}
+              />
+
+              <ExpenseField
+                label="Paid to"
+                placeholder="e.g. NEPA, plumber's name"
+                {...register("paidTo")}
+              />
+
+              <div className="sm:col-span-2">
+                <ExpenseField
+                  label="Description"
+                  placeholder="Brief description of what this expense covered"
+                  {...register("description")}
+                />
+              </div>
+
+              <div className="block">
+                <span className="text-sm font-semibold">Payment method</span>
+                <div className="mt-2 flex gap-2">
+                  {(["Cash", "Transfer", "POS"] as const).map((m) => (
+                    <label key={m} className="flex cursor-pointer items-center gap-2">
+                      <input
+                        type="radio"
+                        value={m}
+                        {...register("method")}
+                        className="accent-[color:var(--primary)]"
+                      />
+                      <span className="text-sm">{m}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <footer className="flex justify-end gap-3 border-t border-border px-6 py-5">
-              <button onClick={() => setOpen(false)} className="h-11 rounded-md border border-border px-5 text-sm font-semibold hover:bg-muted">
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForm(false);
+                  reset();
+                }}
+                className="flex h-11 items-center rounded-md border border-border px-4 text-sm font-semibold hover:bg-muted"
+              >
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  setOpen(false);
-                  toast.success("Expense recorded", { description: "Estimated profit recalculated." });
-                }}
-                className="h-11 rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground hover:bg-primary-deep"
+                type="submit"
+                disabled={isSubmitting}
+                className="flex h-11 items-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
               >
-                Save expense
+                {isSubmitting ? "Saving…" : "Save expense"}
               </button>
-            </footer>
-          </div>
-        </div>
+            </div>
+          </form>
+        </Panel>
       )}
+
+      {/* Expense list */}
+      <Panel className="mt-6" bodyClassName="p-0">
+        <div className="p-5">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by description, category or paid to…"
+            className="h-11 w-full rounded-md border border-input bg-background px-4 text-sm outline-none focus:border-primary"
+          />
+        </div>
+
+        {filtered.length === 0 ? (
+          <EmptyState
+            icon={<Receipt className="size-5" />}
+            title={
+              expenses?.length === 0 ? "No expenses recorded yet" : "No expenses match your search"
+            }
+            description={
+              expenses?.length === 0
+                ? 'Click "Add expense" above to record your first expense.'
+                : "Try a different search term."
+            }
+          />
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[800px] text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left">
+                    {[
+                      "Category",
+                      "Description",
+                      "Class",
+                      "Paid to",
+                      "Method",
+                      "Amount",
+                      "Date",
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filtered.slice(0, 20).map((e) => (
+                    <tr key={e.id} className="hover:bg-muted/60">
+                      <td className="px-6 py-4">
+                        <StatusBadge tone="primary">{e.category}</StatusBadge>
+                      </td>
+                      <td className="px-6 py-4 font-medium">{e.description || "—"}</td>
+                      <td className="px-6 py-4 text-muted-foreground">
+                        {e.className ?? "School-wide"}
+                      </td>
+                      <td className="px-6 py-4 text-muted-foreground">{e.paidTo}</td>
+                      <td className="px-6 py-4 text-muted-foreground">{e.method}</td>
+                      <td className="px-6 py-4">
+                        <Money value={e.amount} className="font-bold text-destructive" />
+                      </td>
+                      <td className="px-6 py-4 text-muted-foreground">{e.date}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {filtered.length > 20 && (
+              <p className="px-6 py-4 text-xs text-muted-foreground">
+                Showing 20 of {filtered.length} expenses. Use search to narrow down.
+              </p>
+            )}
+          </>
+        )}
+      </Panel>
     </AppShell>
   );
 }
+
+const ExpenseField = React.forwardRef<
+  HTMLInputElement,
+  { label: string; error?: string } & React.InputHTMLAttributes<HTMLInputElement>
+>(function ExpenseField({ label, error, ...props }, ref) {
+  return (
+    <label className="block">
+      <span className="text-sm font-semibold">{label}</span>
+      <input
+        ref={ref}
+        {...props}
+        className="mt-2 h-12 w-full rounded-md border border-input bg-background px-4 text-sm outline-none transition-colors focus:border-primary"
+      />
+      {error && <p className="mt-1.5 text-xs text-destructive">{error}</p>}
+    </label>
+  );
+});

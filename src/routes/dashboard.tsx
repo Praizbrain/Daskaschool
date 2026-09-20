@@ -1,3 +1,4 @@
+import { PageLoadingSkeleton } from "@/components/fin/loading-skeleton";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowUpRight,
@@ -62,9 +63,7 @@ function Dashboard() {
   if (isLoading) {
     return (
       <AppShell>
-        <div className="flex min-h-[400px] items-center justify-center">
-          <p className="text-sm text-muted-foreground">Loading financial overview…</p>
-        </div>
+        <PageLoadingSkeleton metricCards={6} />
       </AppShell>
     );
   }

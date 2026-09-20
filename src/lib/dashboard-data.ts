@@ -1,11 +1,7 @@
 import { supabase } from "@/lib/supabase-client";
 
 export type DashboardData = {
-  school: {
-    name: string;
-    session: string;
-    term: string;
-  };
+  school: { name: string; session: string; term: string };
   metrics: {
     expectedRevenue: number;
     collectedRevenue: number;
@@ -22,12 +18,7 @@ export type DashboardData = {
     expensesToday: number;
     studentsOwingCount: number;
   };
-  sections: {
-    name: string;
-    students: number;
-    expected: number;
-    collected: number;
-  }[];
+  sections: { name: string; students: number; expected: number; collected: number }[];
   outstandingStudents: {
     id: string;
     name: string;
@@ -52,11 +43,7 @@ export type DashboardData = {
     amount: number;
     date: string;
   }[];
-  revenueTrend: {
-    month: string;
-    revenue: number;
-    expenses: number;
-  }[];
+  revenueTrend: { month: string; revenue: number; expenses: number }[];
 };
 
 function isToday(dateString: string): boolean {
@@ -81,7 +68,11 @@ export async function fetchDashboardData(): Promise<DashboardData> {
     supabase
       .from("classes_staff_view")
       .select("id, name, section, tuition_fee, books_fee, other_charges"),
-    supabase.from("students").select("id, full_name, class_id, guardian_name, discount"),
+    // IMPORTANT: only active (non-archived) students count toward expected revenue
+    supabase
+      .from("students")
+      .select("id, full_name, class_id, guardian_name, discount")
+      .is("archived_at", null),
     supabase
       .from("payments")
       .select("id, student_id, amount, items, method, created_at")
@@ -106,7 +97,9 @@ export async function fetchDashboardData(): Promise<DashboardData> {
 
   const classById = new Map(classes.map((c) => [c.id, c]));
 
-  // Per-student expected fee and paid-so-far
+  // Collected revenue includes ALL payments (including from archived students)
+  // because the school genuinely received that money — it doesn't disappear
+  // just because a student later left. Only EXPECTED revenue excludes archived.
   const paidByStudent = new Map<string, number>();
   for (const p of payments) {
     paidByStudent.set(p.student_id, (paidByStudent.get(p.student_id) ?? 0) + Number(p.amount));
@@ -125,7 +118,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
     const discount = Number(s.discount ?? 0);
     const expected = tuition + books + other - discount;
     const paid = paidByStudent.get(s.id) ?? 0;
-    const outstandingAmt = Math.max(expected - paid, 0);
+    const outstanding = Math.max(expected - paid, 0);
 
     expectedRevenue += expected;
     discounts += discount;
@@ -140,11 +133,12 @@ export async function fetchDashboardData(): Promise<DashboardData> {
       guardian: (s.guardian_name as string) ?? "—",
       expected,
       paid,
-      outstanding: outstandingAmt,
+      outstanding,
       status: studentStatus(paid, expected),
     };
   });
 
+  // Collected = all payments, including from archived students
   const collectedRevenue = payments.reduce((sum, p) => sum + Number(p.amount), 0);
   const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
   const todayRevenue = payments
@@ -204,10 +198,12 @@ export async function fetchDashboardData(): Promise<DashboardData> {
     category: e.category,
     paidTo: (e.paid_to as string) ?? "—",
     amount: Number(e.amount),
-    date: new Date(e.created_at).toLocaleDateString("en-NG", { day: "numeric", month: "short" }),
+    date: new Date(e.created_at).toLocaleDateString("en-NG", {
+      day: "numeric",
+      month: "short",
+    }),
   }));
 
-  // Last 6 months revenue/expenses trend
   const now = new Date();
   const months: { key: string; label: string }[] = [];
   for (let i = 5; i >= 0; i--) {

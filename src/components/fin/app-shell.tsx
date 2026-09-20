@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { GlobalSearchBar } from "@/components/fin/search-bar";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Bell,
   Boxes,
@@ -11,7 +12,6 @@ import {
   Menu,
   Receipt,
   School,
-  Search,
   Settings,
   Target,
   Users,
@@ -21,8 +21,11 @@ import {
   PanelLeftClose,
   PanelLeft,
   UserCircle2,
+  Copy,
+  Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PageLoadingSkeleton } from "@/components/fin/loading-skeleton";
 import { SCHOOL } from "@/lib/school-data";
 import { useAuth } from "@/hooks/use-auth";
 import { InitialAvatar, StatusBadge } from "@/components/fin/primitives";
@@ -49,6 +52,31 @@ const NAV = [
   { to: "/settings", label: "Settings", icon: Settings, superAdminOnly: true },
 ] as const;
 
+function StaffIdCopyRow({ staffId }: { staffId: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(staffId).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }, [staffId]);
+
+  return (
+    <span className="flex items-center gap-1 font-mono text-[11px] tracking-wide text-muted-foreground">
+      <span>Staff ID: {staffId}</span>
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="inline-flex size-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        aria-label="Copy Staff ID"
+      >
+        {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
+      </button>
+    </span>
+  );
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -60,8 +88,52 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen w-full items-center justify-center bg-background">
-        <p className="text-sm text-muted-foreground">Loading…</p>
+      <div className="flex min-h-screen w-full bg-background">
+        {/* Sidebar skeleton — matches the real sidebar width */}
+        <aside className="sticky top-0 hidden h-screen w-[264px] shrink-0 border-r border-sidebar-border bg-sidebar lg:flex lg:flex-col">
+          <div className="animate-pulse px-5 py-6">
+            <div className="flex items-center gap-3">
+              <div className="size-10 shrink-0 rounded-md bg-muted" />
+              <div className="space-y-2">
+                <div className="h-3.5 w-24 rounded-md bg-muted" />
+                <div className="h-3 w-16 rounded-md bg-muted" />
+              </div>
+            </div>
+            <div className="mt-8 space-y-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 rounded-md px-3 py-2.5">
+                  <div className="size-[18px] rounded bg-muted" />
+                  <div
+                    className="h-3.5 rounded-md bg-muted"
+                    style={{ width: `${60 + (i % 3) * 20}%` }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </aside>
+
+        {/* Content area skeleton */}
+        <div className="flex min-w-0 flex-1 flex-col">
+          {/* Top bar skeleton */}
+          <header className="sticky top-0 z-30 border-b border-border bg-card/90 backdrop-blur">
+            <div className="mx-auto flex w-full max-w-[1440px] animate-pulse items-center gap-4 px-6 py-4 lg:px-10">
+              <div className="h-11 w-11 shrink-0 rounded-md bg-muted lg:hidden" />
+              <div className="h-11 flex-1 max-w-md rounded-md bg-muted" />
+              <div className="ml-auto hidden items-center gap-2 md:flex">
+                <div className="h-6 w-20 rounded-full bg-muted" />
+                <div className="h-6 w-16 rounded-full bg-muted" />
+              </div>
+              <div className="size-11 rounded-md bg-muted" />
+              <div className="h-10 w-28 rounded-md bg-muted" />
+            </div>
+          </header>
+
+          {/* Main content skeleton */}
+          <main className="mx-auto w-full max-w-[1440px] flex-1 px-6 py-8 lg:px-10 lg:py-10">
+            <PageLoadingSkeleton metricCards={4} />
+          </main>
+        </div>
       </div>
     );
   }
@@ -245,14 +317,7 @@ function TopBar({
           <Menu className="size-[18px]" />
         </button>
 
-        <label className="relative flex h-11 flex-1 max-w-md items-center">
-          <Search className="pointer-events-none absolute left-3.5 size-4 text-muted-foreground" />
-          <input
-            type="search"
-            placeholder="Search students, receipts, expenses…"
-            className="h-11 w-full rounded-md border border-input bg-background pl-10 pr-4 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
-          />
-        </label>
+        <GlobalSearchBar />
 
         <div className="ml-auto hidden items-center gap-2 md:flex">
           <StatusBadge tone="primary">{SCHOOL.session}</StatusBadge>
@@ -278,11 +343,7 @@ function TopBar({
           <DropdownMenuContent align="end" className="w-64 rounded-md">
             <DropdownMenuLabel className="space-y-1">
               <p className="text-sm font-semibold">{email}</p>
-              {staffId && (
-                <p className="font-mono text-[11px] tracking-wide text-muted-foreground">
-                  Staff ID: {staffId}
-                </p>
-              )}
+              {staffId && <StaffIdCopyRow staffId={staffId} />}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>

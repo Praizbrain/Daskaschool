@@ -1,3 +1,4 @@
+import { PageLoadingSkeleton } from "@/components/fin/loading-skeleton";
 import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
 import { useState } from "react";
 import { AlertTriangle, ArrowLeft, Phone, Plus, Receipt, Trash2, X } from "lucide-react";
@@ -45,9 +46,7 @@ function StudentProfile() {
   if (isLoading) {
     return (
       <AppShell>
-        <div className="flex min-h-[300px] items-center justify-center">
-          <p className="text-sm text-muted-foreground">Loading student…</p>
-        </div>
+        <PageLoadingSkeleton metricCards={4} showTable={false} />
       </AppShell>
     );
   }

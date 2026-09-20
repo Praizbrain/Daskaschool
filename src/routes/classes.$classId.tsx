@@ -1,4 +1,6 @@
+import { PageLoadingSkeleton } from "@/components/fin/loading-skeleton";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import * as React from "react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -45,9 +47,7 @@ function ClassDetails() {
   if (isLoading) {
     return (
       <AppShell>
-        <div className="flex min-h-[300px] items-center justify-center">
-          <p className="text-sm text-muted-foreground">Loading class…</p>
-        </div>
+        <PageLoadingSkeleton metricCards={4} showTable={false} />
       </AppShell>
     );
   }
@@ -300,7 +300,7 @@ function EditClassPanel({
 
   const onSubmit = async (values: EditFormValues) => {
     try {
-      await updateClass.mutateAsync(values);
+      await updateClass.mutateAsync({ ...values, teacherName: values.teacherName ?? "" });
       toast.success("Class updated", {
         description: "Fee structure and salary changes are reflected everywhere immediately.",
       });

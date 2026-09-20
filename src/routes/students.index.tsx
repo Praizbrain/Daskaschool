@@ -1,7 +1,9 @@
+import { PageLoadingSkeleton } from "@/components/fin/loading-skeleton";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Filter, Plus, Search, UserX } from "lucide-react";
 import { toast } from "sonner";
+import { z } from "zod";
 import { AppShell } from "@/components/fin/app-shell";
 import {
   EmptyState,
@@ -16,6 +18,9 @@ import { naira } from "@/lib/school-data";
 import { useStudents } from "@/hooks/use-students";
 
 export const Route = createFileRoute("/students/")({
+  validateSearch: z.object({
+    q: z.string().optional(),
+  }),
   head: () => ({
     meta: [
       { title: "Students — Divine Sources Finance OS" },
@@ -33,8 +38,15 @@ const STATUSES = ["All", "Paid", "Part Payment", "Owing"] as const;
 const PAGE_SIZE = 20;
 
 function StudentsPage() {
+  const searchParams = Route.useSearch();
   const { data: students, isLoading, error } = useStudents();
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(searchParams.q || "");
+
+  useEffect(() => {
+    if (searchParams.q !== undefined) {
+      setQuery(searchParams.q);
+    }
+  }, [searchParams.q]);
   const [status, setStatus] = useState<(typeof STATUSES)[number]>("All");
   const [klass, setKlass] = useState("All classes");
   const [page, setPage] = useState(1);
@@ -66,9 +78,7 @@ function StudentsPage() {
   if (isLoading) {
     return (
       <AppShell>
-        <div className="flex min-h-[300px] items-center justify-center">
-          <p className="text-sm text-muted-foreground">Loading students…</p>
-        </div>
+        <PageLoadingSkeleton metricCards={0} />
       </AppShell>
     );
   }
