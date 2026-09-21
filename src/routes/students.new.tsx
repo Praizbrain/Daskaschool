@@ -32,7 +32,7 @@ const schema = z.object({
   address: z.string().optional(),
   guardianName: z.string().optional(),
   guardianPhone: z.string().optional(),
-  discount: z.coerce.number().min(0).default(0),
+  discount: z.coerce.number().min(0),
 });
 
 type FormValues = z.infer<typeof schema>;

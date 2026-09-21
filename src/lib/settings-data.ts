@@ -2,8 +2,8 @@ import { supabase } from "@/lib/supabase-client";
 
 export type SchoolSettings = {
   name: string;
-  address: string;
-  phone: string;
+  address?: string;
+  phone?: string;
   currentSession: string;
   currentTerm: string;
 };
@@ -28,8 +28,8 @@ export async function updateSchoolSettings(input: SchoolSettings): Promise<void>
     .from("school_settings")
     .update({
       name: input.name,
-      address: input.address,
-      phone: input.phone,
+      address: input.address ?? "",
+      phone: input.phone ?? "",
       current_session: input.currentSession,
       current_term: input.currentTerm,
     })
