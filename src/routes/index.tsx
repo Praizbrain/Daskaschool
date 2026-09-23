@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase-client";
 import { Eye, EyeOff, ShieldCheck, ArrowRight } from "lucide-react";
 import { SCHOOL } from "@/lib/school-data";
 import { naira } from "@/lib/school-data";
+import { ThemeToggle } from "@/components/fin/theme-toggle";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -73,7 +74,10 @@ function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="relative flex min-h-screen bg-background">
+      <div className="absolute top-5 right-5 sm:top-6 sm:right-6 z-20">
+        <ThemeToggle />
+      </div>
       <div className="flex w-full flex-col justify-center px-6 py-12 lg:w-[52%] lg:px-20">
         <div className="mx-auto w-full max-w-[420px]">
           <div className="flex items-center gap-3">

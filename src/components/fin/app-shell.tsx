@@ -22,11 +22,15 @@ import {
   UserCircle2,
   Copy,
   Check,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PageLoadingSkeleton } from "@/components/fin/loading-skeleton";
 import { SCHOOL } from "@/lib/school-data";
 import { useAuth } from "@/hooks/use-auth";
+import { useTheme } from "@/lib/theme-provider";
+import { ThemeToggle, ThemeToggleRow } from "@/components/fin/theme-toggle";
 import { InitialAvatar, StatusBadge } from "@/components/fin/primitives";
 import {
   DropdownMenu,
@@ -116,15 +120,18 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="flex min-w-0 flex-1 flex-col">
           {/* Top bar skeleton */}
           <header className="sticky top-0 z-30 border-b border-border bg-card/90 backdrop-blur">
-            <div className="mx-auto flex w-full max-w-[1440px] animate-pulse items-center gap-4 px-6 py-4 lg:px-10">
-              <div className="h-11 w-11 shrink-0 rounded-md bg-muted lg:hidden" />
-              <div className="h-11 flex-1 max-w-md rounded-md bg-muted" />
+            <div className="mx-auto flex w-full max-w-[1440px] animate-pulse items-center gap-2 px-4 py-3 sm:gap-4 sm:px-6 lg:px-10">
+              <div className="size-10 shrink-0 rounded-md bg-muted sm:size-11 lg:hidden" />
+              <div className="h-10 sm:h-11 flex-1 max-w-md rounded-md bg-muted" />
               <div className="ml-auto hidden items-center gap-2 md:flex">
                 <div className="h-6 w-20 rounded-full bg-muted" />
                 <div className="h-6 w-16 rounded-full bg-muted" />
               </div>
-              <div className="size-11 rounded-md bg-muted" />
-              <div className="h-10 w-28 rounded-md bg-muted" />
+              <div className="flex items-center gap-2 sm:gap-3 ml-auto md:ml-0">
+                <div className="size-10 sm:size-11 rounded-md bg-muted" />
+                <div className="size-10 sm:size-11 rounded-md bg-muted" />
+                <div className="h-10 w-10 sm:w-28 rounded-md bg-muted" />
+              </div>
             </div>
           </header>
 
@@ -181,6 +188,13 @@ export function AppShell({ children }: { children: ReactNode }) {
         </nav>
 
         <div className="space-y-1 border-t border-sidebar-border p-3">
+          {collapsed ? (
+            <div className="flex justify-center py-1">
+              <ThemeToggle size="sm" />
+            </div>
+          ) : (
+            <ThemeToggleRow />
+          )}
           <Link
             to="/settings"
             search={{ tab: "users" }}
@@ -256,6 +270,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             })}
           </nav>
           <div className="space-y-1 border-t border-sidebar-border p-3">
+            <ThemeToggleRow onToggle={() => setMobileNavOpen(false)} />
             <button
               onClick={() => {
                 setMobileNavOpen(false);
@@ -305,12 +320,15 @@ function TopBar({
   onOpenMobileNav: () => void;
   onSignOut: () => void;
 }) {
+  const { resolvedTheme, toggleTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-card/90 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-[1440px] items-center gap-4 px-6 py-4 lg:px-10">
+      <div className="mx-auto flex w-full max-w-[1440px] items-center gap-2 px-4 py-3 sm:gap-4 sm:px-6 lg:px-10">
         <button
           onClick={onOpenMobileNav}
-          className="flex size-11 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden"
+          className="flex size-10 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:size-11 lg:hidden"
           aria-label="Open menu"
         >
           <Menu className="size-[18px]" />
@@ -323,46 +341,58 @@ function TopBar({
           <StatusBadge tone="gold">{SCHOOL.term}</StatusBadge>
         </div>
 
-        <button className="relative flex size-11 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-          <Bell className="size-[18px]" />
-          <span className="absolute right-2.5 top-2.5 size-2 rounded-full bg-destructive" />
-        </button>
+        <div className="flex items-center gap-2 sm:gap-3 ml-auto md:ml-0">
+          <ThemeToggle className="size-10 sm:size-11 shrink-0" />
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-3 rounded-md border border-border px-2.5 py-1.5 transition-colors hover:bg-muted">
-              <InitialAvatar name={name} size="sm" />
-              <span className="hidden text-left sm:block">
-                <span className="block text-xs font-semibold leading-tight">{name}</span>
-                <span className="block text-[11px] text-muted-foreground">{role}</span>
-              </span>
-              <ChevronDown className="size-4 text-muted-foreground" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-64 rounded-md">
-            <DropdownMenuLabel className="space-y-1">
-              <p className="text-sm font-semibold">{email}</p>
-              {staffId && <StaffIdCopyRow staffId={staffId} />}
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link to="/settings" search={{ tab: "users" }}>
-                My profile
-              </Link>
-            </DropdownMenuItem>
-            {isSuperAdmin && (
+          <button
+            type="button"
+            className="relative flex size-10 sm:size-11 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="Notifications"
+          >
+            <Bell className="size-[18px]" />
+            <span className="absolute right-2.5 top-2.5 size-2 rounded-full bg-destructive" />
+          </button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-2 sm:gap-3 rounded-md border border-border px-2 py-1.5 sm:px-2.5 transition-colors hover:bg-muted">
+                <InitialAvatar name={name} size="sm" />
+                <span className="hidden text-left sm:block">
+                  <span className="block text-xs font-semibold leading-tight">{name}</span>
+                  <span className="block text-[11px] text-muted-foreground">{role}</span>
+                </span>
+                <ChevronDown className="size-4 text-muted-foreground" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64 rounded-md">
+              <DropdownMenuLabel className="space-y-1">
+                <p className="text-sm font-semibold">{email}</p>
+                {staffId && <StaffIdCopyRow staffId={staffId} />}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={toggleTheme}>
+                {isDark ? <Sun className="mr-2 size-4" /> : <Moon className="mr-2 size-4" />}
+                <span>{isDark ? "Switch to light mode" : "Switch to dark mode"}</span>
+              </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link to="/settings" search={{ tab: "school" }}>
-                  School settings
+                <Link to="/settings" search={{ tab: "users" }}>
+                  My profile
                 </Link>
               </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={onSignOut} className="text-destructive">
-              Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              {isSuperAdmin && (
+                <DropdownMenuItem asChild>
+                  <Link to="/settings" search={{ tab: "school" }}>
+                    School settings
+                  </Link>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={onSignOut} className="text-destructive">
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </header>
   );
