@@ -148,23 +148,34 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen w-full bg-background">
       <aside
         className={cn(
-          "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300 lg:flex",
+          "sticky top-0 hidden h-screen shrink-0 flex-col justify-between border-r border-sidebar-border bg-sidebar transition-all duration-300 lg:flex z-40 select-none",
           collapsed ? "w-[76px]" : "w-[264px]",
         )}
       >
-        <div className="flex items-center gap-3 px-5 py-6">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-md overflow-hidden">
-            <img src="/main-logo.png" alt="DaskaSchool" className="size-10 object-contain" />
-          </span>
-          {!collapsed && (
-            <div className="min-w-0">
-              <p className="truncate text-sm font-bold leading-tight">DaskaSchool</p>
-              <p className="truncate text-[11px] text-muted-foreground">Run the whole school from one place.</p>
-            </div>
-          )}
+        <div className={cn("flex items-center px-4 py-5 shrink-0 border-b border-sidebar-border/40", collapsed ? "flex-col gap-3 justify-center" : "justify-between gap-3")}>
+          <div className={cn("flex items-center gap-3 min-w-0", collapsed && "justify-center")}>
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-md overflow-hidden">
+              <img src="/main-logo.png" alt="DaskaSchool" className="size-10 object-contain" />
+            </span>
+            {!collapsed && (
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold leading-tight">DaskaSchool</p>
+                <p className="truncate text-[11px] text-muted-foreground">Run the whole school from one place.</p>
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setCollapsed((c) => !c)}
+            className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? <PanelLeft className="size-[18px]" /> : <PanelLeftClose className="size-[18px]" />}
+          </button>
         </div>
 
-        <nav className="flex-1 space-y-1 px-3">
+        <nav className="flex-1 min-h-0 overflow-y-auto space-y-1 px-3 py-3">
           {visibleNav.map((item) => {
             const active = pathname.startsWith(item.to);
             return (
@@ -187,7 +198,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           })}
         </nav>
 
-        <div className="space-y-1 border-t border-sidebar-border p-3">
+        <div className="space-y-1 border-t border-sidebar-border p-3 shrink-0 bg-sidebar">
           {collapsed ? (
             <div className="flex justify-center py-1">
               <ThemeToggle size="sm" />
@@ -202,32 +213,38 @@ export function AppShell({ children }: { children: ReactNode }) {
               "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
               collapsed && "justify-center px-0",
             )}
+            title="Profile"
           >
             <UserCircle2 className="size-[18px] shrink-0" />
             {!collapsed && <span>Profile</span>}
           </Link>
           <button
+            type="button"
             onClick={signOut}
             className={cn(
               "flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-danger-soft hover:text-destructive",
               collapsed && "justify-center px-0",
             )}
+            title="Logout"
           >
             <LogOut className="size-[18px] shrink-0" />
             {!collapsed && <span>Logout</span>}
           </button>
           <button
+            type="button"
             onClick={() => setCollapsed((c) => !c)}
             className={cn(
               "flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-              collapsed && "justify-center px-0",
+              collapsed && "justify-center px-0 bg-muted/60 text-foreground hover:bg-muted",
             )}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? (
               <PanelLeft className="size-[18px]" />
             ) : (
               <>
-                <PanelLeftClose className="size-[18px]" />
+                <PanelLeftClose className="size-[18px] shrink-0" />
                 <span>Collapse</span>
               </>
             )}
@@ -292,7 +309,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           email={email ?? ""}
           role={isSuperAdmin ? "Super Admin" : "Staff"}
           staffId={profile?.staff_id ?? null}
+          isSidebarCollapsed={collapsed}
           onOpenMobileNav={() => setMobileNavOpen(true)}
+          onToggleDesktopSidebar={() => setCollapsed((c) => !c)}
           onSignOut={signOut}
         />
         <main className="mx-auto w-full max-w-[1440px] flex-1 px-6 py-8 lg:px-10 lg:py-10">
@@ -309,7 +328,9 @@ function TopBar({
   email,
   role,
   staffId,
+  isSidebarCollapsed,
   onOpenMobileNav,
+  onToggleDesktopSidebar,
   onSignOut,
 }: {
   isSuperAdmin: boolean;
@@ -317,7 +338,9 @@ function TopBar({
   email: string;
   role: string;
   staffId: string | null;
+  isSidebarCollapsed: boolean;
   onOpenMobileNav: () => void;
+  onToggleDesktopSidebar: () => void;
   onSignOut: () => void;
 }) {
   const { resolvedTheme, toggleTheme } = useTheme();
@@ -333,6 +356,18 @@ function TopBar({
         >
           <Menu className="size-[18px]" />
         </button>
+
+        {isSidebarCollapsed && (
+          <button
+            type="button"
+            onClick={onToggleDesktopSidebar}
+            className="hidden size-11 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:flex"
+            aria-label="Expand sidebar"
+            title="Expand sidebar"
+          >
+            <PanelLeft className="size-[18px]" />
+          </button>
+        )}
 
         <GlobalSearchBar />
 
