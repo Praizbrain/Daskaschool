@@ -152,15 +152,22 @@ export function AppShell({ children }: { children: ReactNode }) {
           collapsed ? "w-[76px]" : "w-[264px]",
         )}
       >
-        <div className={cn("flex items-center px-4 py-5 shrink-0 border-b border-sidebar-border/40", collapsed ? "flex-col gap-3 justify-center" : "justify-between gap-3")}>
+        <div
+          className={cn(
+            "flex items-center px-4 py-5 shrink-0 border-b border-sidebar-border/40",
+            collapsed ? "flex-col gap-3 justify-center" : "justify-between gap-3",
+          )}
+        >
           <div className={cn("flex items-center gap-3 min-w-0", collapsed && "justify-center")}>
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-md overflow-hidden">
-              <img src="/main-logo.png" alt="DaskaSchool" className="size-10 object-contain" />
+            <span className="flex size-12 shrink-0 items-center justify-center rounded-md overflow-hidden">
+              <img src="/main-logo.png" alt="DaskaSchool" className="size-12 object-contain" />
             </span>
             {!collapsed && (
               <div className="min-w-0">
-                <p className="truncate text-sm font-bold leading-tight">DaskaSchool</p>
-                <p className="truncate text-[11px] text-muted-foreground">Run the whole school from one place.</p>
+                <p className="truncate text-base font-bold leading-tight">DaskaSchool</p>
+                <p className="truncate text-[11px] text-muted-foreground">
+                  Run the whole school from one place.
+                </p>
               </div>
             )}
           </div>
@@ -171,7 +178,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            {collapsed ? <PanelLeft className="size-[18px]" /> : <PanelLeftClose className="size-[18px]" />}
+            {collapsed ? (
+              <PanelLeft className="size-[18px]" />
+            ) : (
+              <PanelLeftClose className="size-[18px]" />
+            )}
           </button>
         </div>
 
@@ -256,12 +267,14 @@ export function AppShell({ children }: { children: ReactNode }) {
         <SheetContent side="left" className="w-[264px] bg-sidebar p-0 text-sidebar-foreground">
           <SheetHeader className="border-b border-sidebar-border px-5 py-6">
             <SheetTitle className="flex items-center gap-3 text-left">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-md overflow-hidden">
-                <img src="/main-logo.png" alt="DaskaSchool" className="size-10 object-contain" />
+              <span className="flex size-12 shrink-0 items-center justify-center rounded-md overflow-hidden">
+                <img src="/main-logo.png" alt="DaskaSchool" className="size-12 object-contain" />
               </span>
               <span className="min-w-0">
-                <p className="truncate text-sm font-bold leading-tight">DaskaSchool</p>
-                <p className="truncate text-[11px] font-normal text-muted-foreground">Run the whole school from one place.</p>
+                <p className="truncate text-base font-bold leading-tight">DaskaSchool</p>
+                <p className="truncate text-[11px] font-normal text-muted-foreground">
+                  Run the whole school from one place.
+                </p>
               </span>
             </SheetTitle>
           </SheetHeader>

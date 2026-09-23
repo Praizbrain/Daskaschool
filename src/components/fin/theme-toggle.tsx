@@ -65,7 +65,11 @@ export function ThemeToggleRow({
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
     >
       <div className="flex items-center gap-3">
-        {isDark ? <Sun className="size-[18px] shrink-0" /> : <Moon className="size-[18px] shrink-0" />}
+        {isDark ? (
+          <Sun className="size-[18px] shrink-0" />
+        ) : (
+          <Moon className="size-[18px] shrink-0" />
+        )}
         <span>{isDark ? "Light Mode" : "Dark Mode"}</span>
       </div>
       <span className="text-[11px] font-medium tracking-wide uppercase px-2 py-0.5 rounded bg-muted text-muted-foreground">

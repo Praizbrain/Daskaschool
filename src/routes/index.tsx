@@ -80,18 +80,16 @@ function LoginPage() {
       </div>
       <div className="flex w-full flex-col justify-center px-6 py-12 lg:w-[52%] lg:px-20">
         <div className="mx-auto w-full max-w-[420px]">
-          <div className="flex items-center gap-3">
-            <span className="flex size-12 items-center justify-center rounded-md overflow-hidden">
-              <img src="/main-logo.png" alt="DaskaSchool" className="size-12 object-contain" />
-            </span>
-            <div>
-              <p className="text-sm font-bold leading-tight">{SCHOOL.app}</p>
-              <p className="text-xs text-muted-foreground">{SCHOOL.subtitle}</p>
-            </div>
+          <div className="flex items-center">
+            <img
+              src="/primary-horizontal-logo.png"
+              alt="DaskaSchool"
+              className="h-14 w-auto object-contain"
+            />
           </div>
 
-          <h1 className="mt-12 text-4xl font-bold tracking-tight">Welcome back</h1>
-          <p className="mt-3 text-sm text-muted-foreground">
+          <h1 className="mt-12 text-5xl font-bold tracking-tight">Welcome back</h1>
+          <p className="mt-3 text-base text-muted-foreground">
             Sign in to manage fees, payments and school finances for{" "}
             <span className="font-medium text-foreground">{SCHOOL.name}</span>.
           </p>
