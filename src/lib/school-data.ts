@@ -1,7 +1,7 @@
 export const SCHOOL = {
   name: "Divine Sources Praiseland High School",
-  app: "Divine Sources Finance OS",
-  subtitle: "School Finance & Operations",
+  app: "DaskaSchool",
+  subtitle: "Run the whole school from one place.",
   session: "2025 / 2026",
   term: "Second Term",
   address: "14 Praiseland Close, Ikorodu Road, Lagos",

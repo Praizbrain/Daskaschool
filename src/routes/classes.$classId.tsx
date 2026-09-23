@@ -26,7 +26,7 @@ import { useClass, useClasses, useUpdateClass } from "@/hooks/use-classes";
 export const Route = createFileRoute("/classes/$classId")({
   head: () => ({
     meta: [
-      { title: "Class details — Divine Sources Finance OS" },
+      { title: "Class details — DaskaSchool" },
       {
         name: "description",
         content: "Class revenue, fee structure and student payment completion.",

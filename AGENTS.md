@@ -11,7 +11,7 @@
 
 ## About This Repository
 
-This is **Praiseland Finance Hub** (product name: **Divine Sources Finance OS**) — a school
+This is **Praiseland Finance Hub** (product name: **DaskaSchool**) — a school
 bookkeeping and finance web app built specifically for Divine Sources Praiseland High School,
 Benin City, Edo State, Nigeria. It is an internal-staff-only tool. There are no parent-facing
 or student-facing features, and there is no multi-school support — this is a single-tenant app

@@ -10,7 +10,7 @@ import { useClasses } from "@/hooks/use-classes";
 export const Route = createFileRoute("/classes/")({
   head: () => ({
     meta: [
-      { title: "Classes — Divine Sources Finance OS" },
+      { title: "Classes — DaskaSchool" },
       {
         name: "description",
         content: "Class-by-class expected revenue, collections, and outstanding balances.",

@@ -5,7 +5,7 @@ import { ComingSoon } from "@/components/fin/coming-soon";
 export const Route = createFileRoute("/targets")({
   head: () => ({
     meta: [
-      { title: "Targets — Divine Sources Finance OS" },
+      { title: "Targets — DaskaSchool" },
       {
         name: "description",
         content: "Collection targets, deadlines and progress tracking — coming in Phase 11.",

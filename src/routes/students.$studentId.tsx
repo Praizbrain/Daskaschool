@@ -21,7 +21,7 @@ import { useRemoveStudent, useStudent, useStudentPayments } from "@/hooks/use-st
 export const Route = createFileRoute("/students/$studentId")({
   head: () => ({
     meta: [
-      { title: "Student profile — Divine Sources Finance OS" },
+      { title: "Student profile — DaskaSchool" },
       {
         name: "description",
         content: "Student fee summary, guardian details and full payment history.",

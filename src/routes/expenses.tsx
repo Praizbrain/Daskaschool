@@ -26,7 +26,7 @@ import { EXPENSE_CATEGORIES, type CreateExpenseInput } from "@/lib/expenses-data
 export const Route = createFileRoute("/expenses")({
   head: () => ({
     meta: [
-      { title: "Expenses — Divine Sources Finance OS" },
+      { title: "Expenses — DaskaSchool" },
       {
         name: "description",
         content: "Record and review school expenses — salaries, utilities, maintenance and more.",

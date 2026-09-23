@@ -4,20 +4,20 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { supabase } from "@/lib/supabase-client";
-import { School, Eye, EyeOff, ShieldCheck, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, ShieldCheck, ArrowRight } from "lucide-react";
 import { SCHOOL } from "@/lib/school-data";
 import { naira } from "@/lib/school-data";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Sign in — Divine Sources Finance OS" },
+      { title: "Sign in — DaskaSchool" },
       {
         name: "description",
         content:
-          "Staff sign-in for Divine Sources Finance OS, the finance and operations system for Divine Sources Praiseland High School.",
+          "Staff sign-in for DaskaSchool — the simple operating system for Nigerian schools.",
       },
-      { property: "og:title", content: "Sign in — Divine Sources Finance OS" },
+      { property: "og:title", content: "Sign in — DaskaSchool" },
       {
         property: "og:description",
         content: "Internal staff access to school fees, revenue, expenses and reports.",
@@ -77,8 +77,8 @@ function LoginPage() {
       <div className="flex w-full flex-col justify-center px-6 py-12 lg:w-[52%] lg:px-20">
         <div className="mx-auto w-full max-w-[420px]">
           <div className="flex items-center gap-3">
-            <span className="flex size-12 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <School className="size-6" />
+            <span className="flex size-12 items-center justify-center rounded-md overflow-hidden">
+              <img src="/main-logo.png" alt="DaskaSchool" className="size-12 object-contain" />
             </span>
             <div>
               <p className="text-sm font-bold leading-tight">{SCHOOL.app}</p>

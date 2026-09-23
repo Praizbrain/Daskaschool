@@ -11,7 +11,6 @@ import {
   LogOut,
   Menu,
   Receipt,
-  School,
   Settings,
   Target,
   Users,
@@ -147,13 +146,13 @@ export function AppShell({ children }: { children: ReactNode }) {
         )}
       >
         <div className="flex items-center gap-3 px-5 py-6">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <School className="size-5" />
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-md overflow-hidden">
+            <img src="/main-logo.png" alt="DaskaSchool" className="size-10 object-contain" />
           </span>
           {!collapsed && (
             <div className="min-w-0">
-              <p className="truncate text-sm font-bold leading-tight">Divine Sources</p>
-              <p className="truncate text-[11px] text-muted-foreground">Finance OS</p>
+              <p className="truncate text-sm font-bold leading-tight">DaskaSchool</p>
+              <p className="truncate text-[11px] text-muted-foreground">Run the whole school from one place.</p>
             </div>
           )}
         </div>
@@ -226,12 +225,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         <SheetContent side="left" className="w-[264px] bg-sidebar p-0 text-sidebar-foreground">
           <SheetHeader className="border-b border-sidebar-border px-5 py-6">
             <SheetTitle className="flex items-center gap-3 text-left">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                <School className="size-5" />
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-md overflow-hidden">
+                <img src="/main-logo.png" alt="DaskaSchool" className="size-10 object-contain" />
               </span>
               <span className="min-w-0">
-                <p className="truncate text-sm font-bold leading-tight">Divine Sources</p>
-                <p className="truncate text-[11px] font-normal text-muted-foreground">Finance OS</p>
+                <p className="truncate text-sm font-bold leading-tight">DaskaSchool</p>
+                <p className="truncate text-[11px] font-normal text-muted-foreground">Run the whole school from one place.</p>
               </span>
             </SheetTitle>
           </SheetHeader>

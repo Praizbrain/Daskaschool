@@ -23,7 +23,7 @@ export const Route = createFileRoute("/students/")({
   }),
   head: () => ({
     meta: [
-      { title: "Students — Divine Sources Finance OS" },
+      { title: "Students — DaskaSchool" },
       {
         name: "description",
         content:

@@ -14,7 +14,7 @@ import { useClassOptions, useCreateStudent } from "@/hooks/use-students";
 export const Route = createFileRoute("/students/new")({
   head: () => ({
     meta: [
-      { title: "Add student — Divine Sources Finance OS" },
+      { title: "Add student — DaskaSchool" },
       {
         name: "description",
         content: "Enrol a new student — bio data, guardian details, class and fees.",

@@ -15,7 +15,7 @@ import { fetchStudentPaymentItems, type PaymentItem } from "@/lib/finance-data";
 export const Route = createFileRoute("/finance/record-payment")({
   validateSearch: z.object({ student: z.string().optional() }),
   head: () => ({
-    meta: [{ title: "Record payment — Divine Sources Finance OS" }],
+    meta: [{ title: "Record payment — DaskaSchool" }],
   }),
   component: RecordPayment,
 });

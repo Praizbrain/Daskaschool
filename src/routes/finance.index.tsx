@@ -27,7 +27,7 @@ import { useFinanceSummary, useLedger, useProfitByClass } from "@/hooks/use-fina
 export const Route = createFileRoute("/finance/")({
   head: () => ({
     meta: [
-      { title: "Finance — Divine Sources Finance OS" },
+      { title: "Finance — DaskaSchool" },
       {
         name: "description",
         content:

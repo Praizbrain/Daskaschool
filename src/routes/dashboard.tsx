@@ -39,13 +39,13 @@ import { useDashboardData } from "@/hooks/use-dashboard-data";
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "Financial Dashboard — Divine Sources Finance OS" },
+      { title: "Financial Dashboard — DaskaSchool" },
       {
         name: "description",
         content:
           "Term revenue, collection progress, outstanding fees, expenses and estimated profit for Divine Sources Praiseland High School.",
       },
-      { property: "og:title", content: "Financial Dashboard — Divine Sources Finance OS" },
+      { property: "og:title", content: "Financial Dashboard — DaskaSchool" },
       {
         property: "og:description",
         content: "Live view of expected revenue, collections, expenses and estimated profit.",

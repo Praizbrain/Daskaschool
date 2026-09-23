@@ -29,7 +29,7 @@ import {
 import { SECTIONS } from "@/lib/settings-data";
 
 export const Route = createFileRoute("/settings")({
-  head: () => ({ meta: [{ title: "Settings — Divine Sources Finance OS" }] }),
+  head: () => ({ meta: [{ title: "Settings — DaskaSchool" }] }),
   component: SettingsPage,
 });
 

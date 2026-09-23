@@ -10,7 +10,6 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "../components/ui/sonner";
 
 function NotFoundComponent() {
@@ -39,7 +38,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    // Analytics/Error reporting could go here
   }, [error]);
 
   return (
@@ -78,13 +77,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Divine Sources Finance OS â€” School Finance & Operations" },
+      { title: "DaskaSchool â€” School Finance & Operations" },
       {
         name: "description",
         content:
-          "Finance operating system for Divine Sources Praiseland High School: fees, sales, inventory, expenses, payroll and profitability in one place.",
+          "The simple operating system for Nigerian schools: fees, payments, expenses, staff, and profit in one place.",
       },
-      { property: "og:title", content: "Divine Sources Finance OS" },
+      { property: "og:title", content: "DaskaSchool" },
       {
         property: "og:description",
         content: "School finance & operations: fees, revenue, expenses and profit in one place.",
