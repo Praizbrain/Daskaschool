@@ -25,4 +25,14 @@ path, props shape, and any non-obvious behavior.
 
 ## Components
 
-_Empty. Components will be added here as they are wired to real data or newly built._
+### ThemeToggle & ThemeToggleRow
+- **File**: `src/components/fin/theme-toggle.tsx`
+- **Context/Hook**: `src/lib/theme-provider.tsx` (`useTheme()`)
+- **Props**:
+  - `ThemeToggle`: `{ className?: string; size?: "default" | "sm" }` — icon-only button with animated Sun/Moon transition, accessible aria-label and title.
+  - `ThemeToggleRow`: `{ className?: string; onToggle?: () => void }` — full-width item with icon, label ("Dark Mode" / "Light Mode"), and current mode badge.
+- **Behavior**: Toggles between light and dark modes, persists in `localStorage` under `daskaschool-theme`, applies `.dark` to `document.documentElement`, supports system preference, and includes anti-FOUC inline script in `__root.tsx`.
+
+### AppShell
+- **File**: `src/components/fin/app-shell.tsx`
+- **Behavior**: Application chrome with responsive TopBar (hamburger, search, session/term badges, ThemeToggle, notifications Bell, user profile dropdown) and responsive collapsible desktop sidebar (`w-[264px]` expanded, `w-[76px]` collapsed with icon-only nav). `nav` has `min-h-0 overflow-y-auto` so sidebar footer and collapse/expand buttons remain pinned and visible on any viewport height. Sidebar toggle is also available in `TopBar` when collapsed.

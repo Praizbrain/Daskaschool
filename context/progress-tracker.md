@@ -21,7 +21,7 @@ know what is done, what is in progress, and what is next.
       `supabase.auth.signInWithPassword`, redirects to `/dashboard` successfully. Dashboard
       still shows Lovable's hardcoded dummy data — real data comes in Phase 2.
 - [x] 02 Database Setup — next up: create tables, trigger, RLS, seed data
-- [x] 03 Root Layout + Role-Gated Navigation
+- [x] 03 Root Layout + Role-Gated Navigation + Dark Mode Theme Toggle (desktop & mobile)
 
 ### Phase 2 — Dashboard
 
