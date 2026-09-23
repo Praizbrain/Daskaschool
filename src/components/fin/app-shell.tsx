@@ -158,17 +158,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             collapsed ? "flex-col gap-3 justify-center" : "justify-between gap-3",
           )}
         >
-          <div className={cn("flex items-center gap-3 min-w-0", collapsed && "justify-center")}>
-            <span className="flex size-12 shrink-0 items-center justify-center rounded-md overflow-hidden">
-              <img src="/main-logo.png" alt="DaskaSchool" className="size-12 object-contain" />
-            </span>
-            {!collapsed && (
-              <div className="min-w-0">
-                <p className="truncate text-base font-bold leading-tight">DaskaSchool</p>
-                <p className="truncate text-[11px] text-muted-foreground">
-                  Run the whole school from one place.
-                </p>
-              </div>
+          <div className={cn("flex items-center min-w-0", collapsed && "justify-center")}>
+            {collapsed ? (
+              <span className="flex size-12 shrink-0 items-center justify-center rounded-md overflow-hidden">
+                <img src="/main-logo.png" alt="DaskaSchool" className="size-12 object-contain" />
+              </span>
+            ) : (
+              <img
+                src="/primary-horizontal-logo.png"
+                alt="DaskaSchool"
+                className="h-10 w-auto object-contain"
+              />
             )}
           </div>
           <button
@@ -267,15 +267,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         <SheetContent side="left" className="w-[264px] bg-sidebar p-0 text-sidebar-foreground">
           <SheetHeader className="border-b border-sidebar-border px-5 py-6">
             <SheetTitle className="flex items-center gap-3 text-left">
-              <span className="flex size-12 shrink-0 items-center justify-center rounded-md overflow-hidden">
-                <img src="/main-logo.png" alt="DaskaSchool" className="size-12 object-contain" />
-              </span>
-              <span className="min-w-0">
-                <p className="truncate text-base font-bold leading-tight">DaskaSchool</p>
-                <p className="truncate text-[11px] font-normal text-muted-foreground">
-                  Run the whole school from one place.
-                </p>
-              </span>
+              <img
+                src="/primary-horizontal-logo.png"
+                alt="DaskaSchool"
+                className="h-10 w-auto object-contain"
+              />
             </SheetTitle>
           </SheetHeader>
           <nav className="flex-1 space-y-1 px-3 py-4">

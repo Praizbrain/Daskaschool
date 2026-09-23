@@ -78,23 +78,23 @@ function LoginPage() {
       <div className="absolute top-5 right-5 sm:top-6 sm:right-6 z-20">
         <ThemeToggle />
       </div>
-      <div className="flex w-full flex-col justify-center px-6 py-12 lg:w-[52%] lg:px-20">
+      <div className="flex w-full flex-col justify-center px-5 py-8 sm:px-6 sm:py-12 lg:w-[52%] lg:px-20">
         <div className="mx-auto w-full max-w-[420px]">
           <div className="flex items-center">
             <img
               src="/primary-horizontal-logo.png"
               alt="DaskaSchool"
-              className="h-14 w-auto object-contain"
+              className="h-10 sm:h-14 lg:h-16 w-auto object-contain"
             />
           </div>
 
-          <h1 className="mt-12 text-5xl font-bold tracking-tight">Welcome back</h1>
-          <p className="mt-3 text-base text-muted-foreground">
+          <h1 className="mt-8 text-3xl font-bold tracking-tight sm:mt-12 sm:text-5xl">Welcome back</h1>
+          <p className="mt-2 text-sm text-muted-foreground sm:mt-3 sm:text-base">
             Sign in to manage fees, payments and school finances for{" "}
             <span className="font-medium text-foreground">{SCHOOL.name}</span>.
           </p>
 
-          <form className="mt-10 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+          <form className="mt-6 space-y-5 sm:mt-10 sm:space-y-6" onSubmit={handleSubmit(onSubmit)}>
             {authError && (
               <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
                 {authError}
