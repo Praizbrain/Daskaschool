@@ -167,7 +167,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <img
                 src="/primary-horizontal-logo.png"
                 alt="DaskaSchool"
-                className="h-10 w-auto object-contain"
+                className="h-10 w-auto object-contain dark:brightness-[1.85]"
               />
             )}
           </div>
@@ -270,7 +270,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <img
                 src="/primary-horizontal-logo.png"
                 alt="DaskaSchool"
-                className="h-10 w-auto object-contain"
+                className="h-10 w-auto object-contain dark:brightness-[1.85]"
               />
             </SheetTitle>
           </SheetHeader>

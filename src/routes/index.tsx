@@ -84,11 +84,13 @@ function LoginPage() {
             <img
               src="/primary-horizontal-logo.png"
               alt="DaskaSchool"
-              className="h-10 sm:h-14 lg:h-16 w-auto object-contain"
+              className="h-10 sm:h-14 lg:h-16 w-auto object-contain dark:brightness-[1.85]"
             />
           </div>
 
-          <h1 className="mt-8 text-3xl font-bold tracking-tight sm:mt-12 sm:text-5xl">Welcome back</h1>
+          <h1 className="mt-8 text-3xl font-bold tracking-tight sm:mt-12 sm:text-5xl">
+            Welcome back
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground sm:mt-3 sm:text-base">
             Sign in to manage fees, payments and school finances for{" "}
             <span className="font-medium text-foreground">{SCHOOL.name}</span>.
