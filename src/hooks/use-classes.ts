@@ -19,7 +19,7 @@ export function useUpdateClass(classId: string) {
     mutationFn: (input: UpdateClassInput) => updateClass(classId, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["classes"] });
-      queryClient.invalidateQueries({ queryKey: ["class", classId] });
+      queryClient.invalidateQueries({ queryKey: ["class", classId], exact: false });
       queryClient.invalidateQueries({ queryKey: ["students"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },

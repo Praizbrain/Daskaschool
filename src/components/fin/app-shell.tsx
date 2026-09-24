@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { PageLoadingSkeleton } from "@/components/fin/loading-skeleton";
 import { SCHOOL } from "@/lib/school-data";
 import { useAuth } from "@/hooks/use-auth";
+import { useSchoolSettings } from "@/hooks/use-settings";
 import { useTheme } from "@/lib/theme-provider";
 import { ThemeToggle, ThemeToggleRow } from "@/components/fin/theme-toggle";
 import { InitialAvatar, StatusBadge } from "@/components/fin/primitives";
@@ -85,6 +86,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { profile, email, loading, signOut } = useAuth();
+  const { data: schoolData } = useSchoolSettings();
 
   const isSuperAdmin = profile?.role === "super_admin";
   const visibleNav = NAV.filter((item) => !item.superAdminOnly || isSuperAdmin);
@@ -318,6 +320,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           email={email ?? ""}
           role={isSuperAdmin ? "Super Admin" : "Staff"}
           staffId={profile?.staff_id ?? null}
+          session={schoolData?.currentSession ?? SCHOOL.session}
+          term={schoolData?.currentTerm ?? SCHOOL.term}
           isSidebarCollapsed={collapsed}
           onOpenMobileNav={() => setMobileNavOpen(true)}
           onToggleDesktopSidebar={() => setCollapsed((c) => !c)}
@@ -337,6 +341,8 @@ function TopBar({
   email,
   role,
   staffId,
+  session,
+  term,
   isSidebarCollapsed,
   onOpenMobileNav,
   onToggleDesktopSidebar,
@@ -347,6 +353,8 @@ function TopBar({
   email: string;
   role: string;
   staffId: string | null;
+  session: string;
+  term: string;
   isSidebarCollapsed: boolean;
   onOpenMobileNav: () => void;
   onToggleDesktopSidebar: () => void;
@@ -381,8 +389,8 @@ function TopBar({
         <GlobalSearchBar />
 
         <div className="ml-auto hidden items-center gap-2 md:flex">
-          <StatusBadge tone="primary">{SCHOOL.session}</StatusBadge>
-          <StatusBadge tone="gold">{SCHOOL.term}</StatusBadge>
+          <StatusBadge tone="primary">{session}</StatusBadge>
+          <StatusBadge tone="gold">{term}</StatusBadge>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 ml-auto md:ml-0">
