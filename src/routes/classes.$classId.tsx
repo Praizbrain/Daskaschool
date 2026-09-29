@@ -1,12 +1,6 @@
 import { PageLoadingSkeleton } from "@/components/fin/loading-skeleton";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
-import * as React from "react";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { ArrowLeft, Pencil, Users, X } from "lucide-react";
-import { toast } from "sonner";
+import { ArrowLeft, Users } from "lucide-react";
 import { AppShell } from "@/components/fin/app-shell";
 import {
   EmptyState,
@@ -21,7 +15,7 @@ import {
 } from "@/components/fin/primitives";
 import { naira } from "@/lib/school-data";
 import { useAuth } from "@/hooks/use-auth";
-import { useClass, useClasses, useUpdateClass } from "@/hooks/use-classes";
+import { useClass, useClasses } from "@/hooks/use-classes";
 
 export const Route = createFileRoute("/classes/$classId")({
   head: () => ({
@@ -42,7 +36,6 @@ function ClassDetails() {
   const isSuperAdmin = profile?.role === "super_admin";
   const { data: klass, isLoading, error } = useClass(classId, isSuperAdmin);
   const { data: allClasses } = useClasses();
-  const [isEditing, setIsEditing] = useState(false);
 
   if (isLoading) {
     return (
@@ -88,15 +81,6 @@ function ClassDetails() {
         >
           <ArrowLeft className="size-4" /> Back to classes
         </Link>
-
-        {isSuperAdmin && !isEditing && (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="flex h-9 items-center gap-2 rounded-md border border-border px-3 text-xs font-semibold transition-colors hover:bg-muted"
-          >
-            <Pencil className="size-3.5" /> Edit fees & salary
-          </button>
-        )}
       </div>
 
       <div className="mt-5 flex flex-wrap items-end justify-between gap-4">
@@ -115,20 +99,6 @@ function ClassDetails() {
           {klass.collectionPct}% collected
         </StatusBadge>
       </div>
-
-      {isSuperAdmin && isEditing && (
-        <EditClassPanel
-          classId={klass.id}
-          initial={{
-            teacherName: klass.teacherName ?? "",
-            teacherSalary: klass.teacherSalary ?? 0,
-            tuitionFee: klass.tuitionFee,
-            booksFee: klass.booksFee,
-            otherCharges: klass.otherCharges,
-          }}
-          onClose={() => setIsEditing(false)}
-        />
-      )}
 
       <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         <MetricCard
@@ -268,120 +238,6 @@ function ClassDetails() {
     </AppShell>
   );
 }
-
-const editSchema = z.object({
-  teacherName: z.string().optional(),
-  teacherSalary: z.coerce.number().min(0),
-  tuitionFee: z.coerce.number().min(0),
-  booksFee: z.coerce.number().min(0),
-  otherCharges: z.coerce.number().min(0),
-});
-
-type EditFormValues = z.infer<typeof editSchema>;
-
-function EditClassPanel({
-  classId,
-  initial,
-  onClose,
-}: {
-  classId: string;
-  initial: EditFormValues;
-  onClose: () => void;
-}) {
-  const updateClass = useUpdateClass(classId);
-  const {
-    register,
-    handleSubmit,
-    formState: { isSubmitting },
-  } = useForm<EditFormValues>({
-    resolver: zodResolver(editSchema),
-    defaultValues: initial,
-  });
-
-  const onSubmit = async (values: EditFormValues) => {
-    try {
-      await updateClass.mutateAsync({ ...values, teacherName: values.teacherName ?? "" });
-      toast.success("Class updated", {
-        description: "Fee structure and salary changes are reflected everywhere immediately.",
-      });
-      onClose();
-    } catch (err) {
-      console.error("[classes.$classId/EditClassPanel]", err);
-      toast.error("Couldn't save these changes. Please try again.");
-    }
-  };
-
-  return (
-    <Panel className="mt-5" title="Edit fees & salary" bodyClassName="p-6">
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">
-            Visible to Super Admin only. Changes apply to every student in this class immediately.
-          </p>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
-
-        <div className="mt-5 grid gap-5 sm:grid-cols-2">
-          <NumberField label="Tuition fee (₦)" {...register("tuitionFee")} />
-          <NumberField label="Books fee (₦)" {...register("booksFee")} />
-          <NumberField label="Other charges (₦)" {...register("otherCharges")} />
-          <NumberField label="Teacher salary — term (₦)" {...register("teacherSalary")} />
-          <div className="sm:col-span-2">
-            <label className="block">
-              <span className="text-sm font-semibold">Teacher name</span>
-              <input
-                {...register("teacherName")}
-                placeholder="e.g. Mrs. Grace Adeyemi"
-                className="mt-2 h-12 w-full rounded-md border border-input bg-background px-4 text-sm outline-none transition-colors focus:border-primary"
-              />
-            </label>
-          </div>
-        </div>
-
-        <div className="mt-6 flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-11 items-center rounded-md border border-border px-4 text-sm font-semibold transition-colors hover:bg-muted"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="flex h-11 items-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary-deep disabled:opacity-60"
-          >
-            {isSubmitting ? "Saving…" : "Save changes"}
-          </button>
-        </div>
-      </form>
-    </Panel>
-  );
-}
-
-const NumberField = React.forwardRef<
-  HTMLInputElement,
-  { label: string } & React.InputHTMLAttributes<HTMLInputElement>
->(function NumberField({ label, ...props }, ref) {
-  return (
-    <label className="block">
-      <span className="text-sm font-semibold">{label}</span>
-      <input
-        ref={ref}
-        type="number"
-        step="any"
-        {...props}
-        className="num mt-2 h-12 w-full rounded-md border border-input bg-background px-4 text-sm outline-none transition-colors focus:border-primary"
-      />
-    </label>
-  );
-});
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
