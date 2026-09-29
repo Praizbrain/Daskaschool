@@ -31,7 +31,7 @@ import { SCHOOL } from "@/lib/school-data";
 import { useAuth } from "@/hooks/use-auth";
 import { useSchoolSettings } from "@/hooks/use-settings";
 import { useTheme } from "@/lib/theme-provider";
-import { ThemeToggle, ThemeToggleRow } from "@/components/fin/theme-toggle";
+import { ThemeToggle } from "@/components/fin/theme-toggle";
 import { InitialAvatar, StatusBadge } from "@/components/fin/primitives";
 import {
   DropdownMenu,
@@ -42,7 +42,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, superAdminOnly: false },
   { to: "/students", label: "Students", icon: Users, superAdminOnly: false },
@@ -55,17 +54,14 @@ const NAV = [
   { to: "/targets", label: "Targets", icon: Target, superAdminOnly: false },
   { to: "/settings", label: "Settings", icon: Settings, superAdminOnly: true },
 ] as const;
-
 function StaffIdCopyRow({ staffId }: { staffId: string }) {
   const [copied, setCopied] = useState(false);
-
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(staffId).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     });
   }, [staffId]);
-
   return (
     <span className="flex items-center gap-1 font-mono text-[11px] tracking-wide text-muted-foreground">
       <span>Staff ID: {staffId}</span>
@@ -80,17 +76,14 @@ function StaffIdCopyRow({ staffId }: { staffId: string }) {
     </span>
   );
 }
-
 export function AppShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { profile, email, loading, signOut } = useAuth();
   const { data: schoolData } = useSchoolSettings();
-
   const isSuperAdmin = profile?.role === "super_admin";
   const visibleNav = NAV.filter((item) => !item.superAdminOnly || isSuperAdmin);
-
   if (loading) {
     return (
       <div className="flex min-h-screen w-full bg-background">
@@ -117,7 +110,6 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           </div>
         </aside>
-
         {/* Content area skeleton */}
         <div className="flex min-w-0 flex-1 flex-col">
           {/* Top bar skeleton */}
@@ -136,7 +128,6 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
             </div>
           </header>
-
           {/* Main content skeleton */}
           <main className="mx-auto w-full max-w-[1440px] flex-1 px-6 py-8 lg:px-10 lg:py-10">
             <PageLoadingSkeleton metricCards={4} />
@@ -145,7 +136,6 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
     );
   }
-
   return (
     <div className="flex min-h-screen w-full bg-background">
       <aside
@@ -173,21 +163,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               />
             )}
           </div>
-          <button
-            type="button"
-            onClick={() => setCollapsed((c) => !c)}
-            className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {collapsed ? (
-              <PanelLeft className="size-[18px]" />
-            ) : (
-              <PanelLeftClose className="size-[18px]" />
-            )}
-          </button>
         </div>
-
         <nav className="flex-1 min-h-0 overflow-y-auto space-y-1 px-3 py-3">
           {visibleNav.map((item) => {
             const active = pathname.startsWith(item.to);
@@ -210,15 +186,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
-
         <div className="space-y-1 border-t border-sidebar-border p-3 shrink-0 bg-sidebar">
-          {collapsed ? (
-            <div className="flex justify-center py-1">
-              <ThemeToggle size="sm" />
-            </div>
-          ) : (
-            <ThemeToggleRow />
-          )}
           <Link
             to="/settings"
             search={{ tab: "users" }}
@@ -240,31 +208,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             )}
             title="Logout"
           >
-            <LogOut className="size-[18px] shrink-0" />
-            {!collapsed && <span>Logout</span>}
-          </button>
-          <button
-            type="button"
-            onClick={() => setCollapsed((c) => !c)}
-            className={cn(
-              "flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-              collapsed && "justify-center px-0 bg-muted/60 text-foreground hover:bg-muted",
-            )}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {collapsed ? (
-              <PanelLeft className="size-[18px]" />
-            ) : (
-              <>
-                <PanelLeftClose className="size-[18px] shrink-0" />
-                <span>Collapse</span>
-              </>
-            )}
+            <LogOut className="size-[18px] shrink-0" /> {!collapsed && <span>Logout</span>}
           </button>
         </div>
       </aside>
-
       <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
         <SheetContent side="left" className="w-[264px] bg-sidebar p-0 text-sidebar-foreground">
           <SheetHeader className="border-b border-sidebar-border px-5 py-6">
@@ -291,14 +238,12 @@ export function AppShell({ children }: { children: ReactNode }) {
                       : "text-muted-foreground hover:bg-muted hover:text-foreground",
                   )}
                 >
-                  <item.icon className="size-[18px] shrink-0" />
-                  <span>{item.label}</span>
+                  <item.icon className="size-[18px] shrink-0" /> <span>{item.label}</span>
                 </Link>
               );
             })}
           </nav>
           <div className="space-y-1 border-t border-sidebar-border p-3">
-            <ThemeToggleRow onToggle={() => setMobileNavOpen(false)} />
             <button
               onClick={() => {
                 setMobileNavOpen(false);
@@ -306,13 +251,11 @@ export function AppShell({ children }: { children: ReactNode }) {
               }}
               className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-danger-soft hover:text-destructive"
             >
-              <LogOut className="size-[18px] shrink-0" />
-              <span>Logout</span>
+              <LogOut className="size-[18px] shrink-0" /> <span>Logout</span>
             </button>
           </div>
         </SheetContent>
       </Sheet>
-
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar
           isSuperAdmin={isSuperAdmin}
@@ -334,7 +277,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     </div>
   );
 }
-
 function TopBar({
   isSuperAdmin,
   name,
@@ -362,7 +304,6 @@ function TopBar({
 }) {
   const { resolvedTheme, toggleTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
-
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-card/90 backdrop-blur">
       <div className="mx-auto flex w-full max-w-[1440px] items-center gap-2 px-4 py-3 sm:gap-4 sm:px-6 lg:px-10">
@@ -373,29 +314,26 @@ function TopBar({
         >
           <Menu className="size-[18px]" />
         </button>
-
-        {isSidebarCollapsed && (
-          <button
-            type="button"
-            onClick={onToggleDesktopSidebar}
-            className="hidden size-11 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:flex"
-            aria-label="Expand sidebar"
-            title="Expand sidebar"
-          >
+        <button
+          type="button"
+          onClick={onToggleDesktopSidebar}
+          className="hidden size-11 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:flex"
+          aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {isSidebarCollapsed ? (
             <PanelLeft className="size-[18px]" />
-          </button>
-        )}
-
+          ) : (
+            <PanelLeftClose className="size-[18px]" />
+          )}
+        </button>
         <GlobalSearchBar />
-
         <div className="ml-auto hidden items-center gap-2 md:flex">
           <StatusBadge tone="primary">{session}</StatusBadge>
           <StatusBadge tone="gold">{term}</StatusBadge>
         </div>
-
         <div className="flex items-center gap-2 sm:gap-3 ml-auto md:ml-0">
           <ThemeToggle className="size-10 sm:size-11 shrink-0" />
-
           <button
             type="button"
             className="relative flex size-10 sm:size-11 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -404,7 +342,6 @@ function TopBar({
             <Bell className="size-[18px]" />
             <span className="absolute right-2.5 top-2.5 size-2 rounded-full bg-destructive" />
           </button>
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 sm:gap-3 rounded-md border border-border px-2 py-1.5 sm:px-2.5 transition-colors hover:bg-muted">

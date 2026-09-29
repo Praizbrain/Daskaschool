@@ -35,6 +35,7 @@ import {
 } from "@/components/fin/primitives";
 import { naira, pct } from "@/lib/school-data";
 import { useDashboardData } from "@/hooks/use-dashboard-data";
+import { usePaymentModal } from "@/context/payment-modal-context";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -59,6 +60,7 @@ const SECTION_TONES = ["primary", "gold", "olive", "slate"] as const;
 
 function Dashboard() {
   const { data, isLoading, error } = useDashboardData();
+  const { openPaymentModal } = usePaymentModal();
 
   if (isLoading) {
     return (
@@ -105,12 +107,12 @@ function Dashboard() {
             >
               View reports
             </Link>
-            <Link
-              to="/finance/record-payment"
+            <button
+              onClick={() => openPaymentModal()}
               className="flex h-11 items-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary-deep"
             >
               <Plus className="size-4" /> Record payment
-            </Link>
+            </button>
           </>
         }
       />
@@ -467,7 +469,7 @@ function Dashboard() {
               label="Add student"
             />
             <QuickAction
-              to="/finance/record-payment"
+              onClick={() => openPaymentModal()}
               icon={<Receipt className="size-[18px]" />}
               label="Record payment"
             />
@@ -484,7 +486,32 @@ function Dashboard() {
   );
 }
 
-function QuickAction({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) {
+function QuickAction({
+  to,
+  onClick,
+  icon,
+  label,
+}: {
+  to?: string;
+  onClick?: () => void;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  if (onClick) {
+    return (
+      <button
+        onClick={onClick}
+        className="flex items-center gap-3 rounded-md border border-border px-4 py-3.5 text-sm font-semibold transition-colors hover:border-primary hover:bg-primary-soft hover:text-primary"
+      >
+        <span className="flex size-9 items-center justify-center rounded-md bg-primary-soft text-primary">
+          {icon}
+        </span>
+        {label}
+        <Plus className="ml-auto size-4 text-muted-foreground" />
+      </button>
+    );
+  }
+
   return (
     <Link
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

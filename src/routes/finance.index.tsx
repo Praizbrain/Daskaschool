@@ -22,6 +22,7 @@ import {
 import { PageLoadingSkeleton } from "@/components/fin/loading-skeleton";
 import { naira } from "@/lib/school-data";
 import { useAuth } from "@/hooks/use-auth";
+import { usePaymentModal } from "@/context/payment-modal-context";
 import { useFinanceSummary, useLedger, useProfitByClass } from "@/hooks/use-finance";
 
 export const Route = createFileRoute("/finance/")({
@@ -42,6 +43,7 @@ const TABS = ["Ledger", "Summary", "Profit"] as const;
 type Tab = (typeof TABS)[number];
 
 function FinancePage() {
+  const { openPaymentModal } = usePaymentModal();
   const { profile } = useAuth();
   const isSuperAdmin = profile?.role === "super_admin";
   const [tab, setTab] = useState<Tab>("Ledger");
@@ -68,12 +70,12 @@ function FinancePage() {
         title="Finance"
         subtitle={`${ledger?.length ?? 0} payments recorded · ${naira(summary?.collectedRevenue ?? 0)} collected this term`}
         actions={
-          <Link
-            to="/finance/record-payment"
+          <button
+            onClick={() => openPaymentModal()}
             className="flex h-11 items-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary-deep"
           >
             <Plus className="size-4" /> Record payment
-          </Link>
+          </button>
         }
       />
 

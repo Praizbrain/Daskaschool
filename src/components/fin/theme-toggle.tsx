@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/lib/theme-provider";
 import { cn } from "@/lib/utils";
@@ -9,7 +10,9 @@ interface ThemeToggleProps {
 
 export function ThemeToggle({ className, size = "default" }: ThemeToggleProps) {
   const { resolvedTheme, toggleTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const isDark = mounted && resolvedTheme === "dark";
 
   return (
     <button
@@ -47,7 +50,9 @@ export function ThemeToggleRow({
   onToggle?: () => void;
 }) {
   const { resolvedTheme, toggleTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const isDark = mounted && resolvedTheme === "dark";
 
   const handleClick = () => {
     toggleTheme();

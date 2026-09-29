@@ -165,6 +165,7 @@ function FeeTemplatesTab() {
   const [adding, setAdding] = useState<string | null>(null);
   const [newLabel, setNewLabel] = useState("");
   const [newAmount, setNewAmount] = useState<number | "">("");
+  const [newAllowInstallment, setNewAllowInstallment] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState<number | "">("");
 
@@ -178,10 +179,16 @@ function FeeTemplatesTab() {
   const handleAdd = async (section: string) => {
     if (!newLabel.trim() || !newAmount) return;
     try {
-      await upsert.mutateAsync({ section, label: newLabel.trim(), amount: Number(newAmount) });
+      await upsert.mutateAsync({
+        section,
+        label: newLabel.trim(),
+        amount: Number(newAmount),
+        allowInstallment: newAllowInstallment,
+      });
       toast.success(`Added "${newLabel}" to ${section}`);
       setNewLabel("");
       setNewAmount("");
+      setNewAllowInstallment(false);
       setAdding(null);
     } catch {
       toast.error("Couldn't add item.");
@@ -191,7 +198,13 @@ function FeeTemplatesTab() {
   const handleSaveEdit = async (id: string, section: string, label: string) => {
     if (!editAmount) return;
     try {
-      await upsert.mutateAsync({ section, label, amount: Number(editAmount), id });
+      await upsert.mutateAsync({
+        section,
+        label,
+        amount: Number(editAmount),
+        allowInstallment: templates?.find((item) => item.id === id)?.allowInstallment ?? false,
+        id,
+      });
       toast.success("Amount updated.");
       setEditId(null);
     } catch {
@@ -243,6 +256,29 @@ function FeeTemplatesTab() {
               {items.map((item) => (
                 <div key={item.id} className="flex items-center gap-4 px-6 py-4">
                   <p className="flex-1 text-sm font-semibold">{item.label}</p>
+                  <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <input
+                      type="checkbox"
+                      checked={item.allowInstallment}
+                      onChange={(event) =>
+                        upsert.mutate(
+                          {
+                            section: item.section,
+                            label: item.label,
+                            amount: item.amount,
+                            allowInstallment: event.target.checked,
+                            id: item.id,
+                          },
+                          {
+                            onSuccess: () => toast.success("Installment setting updated."),
+                            onError: () => toast.error("Couldn't update installment setting."),
+                          },
+                        )
+                      }
+                      className="size-4 accent-[color:var(--primary)]"
+                    />
+                    Allow installment
+                  </label>
                   {editId === item.id ? (
                     <div className="flex items-center gap-2">
                       <input
@@ -298,6 +334,15 @@ function FeeTemplatesTab() {
                     placeholder="Amount (₦)"
                     className="num h-10 w-32 rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary"
                   />
+                  <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <input
+                      type="checkbox"
+                      checked={newAllowInstallment}
+                      onChange={(event) => setNewAllowInstallment(event.target.checked)}
+                      className="size-4 accent-[color:var(--primary)]"
+                    />
+                    Allow installment
+                  </label>
                   <button
                     onClick={() => handleAdd(section)}
                     className="h-10 rounded-md bg-primary px-3 text-sm font-semibold text-primary-foreground"

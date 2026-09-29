@@ -16,6 +16,7 @@ import {
 } from "@/components/fin/primitives";
 import { naira } from "@/lib/school-data";
 import { useStudents } from "@/hooks/use-students";
+import { usePaymentModal } from "@/context/payment-modal-context";
 
 export const Route = createFileRoute("/students/")({
   validateSearch: z.object({
@@ -38,6 +39,7 @@ const STATUSES = ["All", "Paid", "Part Payment", "Owing"] as const;
 const PAGE_SIZE = 20;
 
 function StudentsPage() {
+  const { openPaymentModal } = usePaymentModal();
   const searchParams = Route.useSearch();
   const { data: students, isLoading, error } = useStudents();
   const [query, setQuery] = useState(searchParams.q || "");
@@ -260,13 +262,12 @@ function StudentsPage() {
                         >
                           View
                         </Link>
-                        <Link
-                          to="/finance/record-payment"
-                          search={{ student: s.id }}
+                        <button
+                          onClick={() => openPaymentModal(s.id)}
                           className="rounded-md bg-primary-soft px-3 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
                         >
                           Record payment
-                        </Link>
+                        </button>
                       </div>
                     </td>
                   </tr>

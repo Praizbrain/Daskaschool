@@ -16,6 +16,7 @@ import {
 } from "@/components/fin/primitives";
 import { naira, pct } from "@/lib/school-data";
 import { useAuth } from "@/hooks/use-auth";
+import { usePaymentModal } from "@/context/payment-modal-context";
 import { useRemoveStudent, useStudent, useStudentPayments } from "@/hooks/use-students";
 
 export const Route = createFileRoute("/students/$studentId")({
@@ -34,6 +35,7 @@ export const Route = createFileRoute("/students/$studentId")({
 const TABS = ["Overview", "Payments"] as const;
 
 function StudentProfile() {
+  const { openPaymentModal } = usePaymentModal();
   const { studentId } = useParams({ from: "/students/$studentId" });
   const { data: student, isLoading, error } = useStudent(studentId);
   const { data: payments, isLoading: paymentsLoading } = useStudentPayments(studentId);
@@ -114,13 +116,12 @@ function StudentProfile() {
               </div>
             )}
           </div>
-          <Link
-            to="/finance/record-payment"
-            search={{ student: student.id }}
+          <button
+            onClick={() => openPaymentModal(student.id)}
             className="flex h-11 items-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary-deep"
           >
             <Plus className="size-4" /> Record payment
-          </Link>
+          </button>
         </div>
 
         <div className="mt-8 grid gap-5 border-t border-border pt-8 sm:grid-cols-2 xl:grid-cols-4">

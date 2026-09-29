@@ -39,12 +39,18 @@ export async function updateSchoolSettings(input: SchoolSettings): Promise<void>
 
 export const SECTIONS = ["KG", "Primary", "JSS", "SS"] as const;
 
-export type FeeTemplate = { id: string; section: string; label: string; amount: number };
+export type FeeTemplate = {
+  id: string;
+  section: string;
+  label: string;
+  amount: number;
+  allowInstallment: boolean;
+};
 
 export async function fetchFeeTemplates(): Promise<FeeTemplate[]> {
   const { data, error } = await supabase
     .from("fee_templates")
-    .select("id, section, label, amount")
+    .select("id, section, label, amount, allow_installment")
     .order("section")
     .order("label");
   if (error) throw error;
@@ -53,6 +59,7 @@ export async function fetchFeeTemplates(): Promise<FeeTemplate[]> {
     section: t.section,
     label: t.label,
     amount: Number(t.amount),
+    allowInstallment: t.allow_installment,
   }));
 }
 
@@ -60,15 +67,22 @@ export async function upsertFeeTemplate(
   section: string,
   label: string,
   amount: number,
+  allowInstallment: boolean,
   id?: string,
 ): Promise<void> {
   if (id) {
-    const { error } = await supabase.from("fee_templates").update({ amount }).eq("id", id);
+    const { error } = await supabase
+      .from("fee_templates")
+      .update({ amount, allow_installment: allowInstallment })
+      .eq("id", id);
     if (error) throw error;
   } else {
     const { error } = await supabase
       .from("fee_templates")
-      .upsert({ section, label, amount }, { onConflict: "section,label" });
+      .upsert(
+        { section, label, amount, allow_installment: allowInstallment },
+        { onConflict: "section,label" },
+      );
     if (error) throw error;
   }
 }

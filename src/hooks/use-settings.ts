@@ -39,13 +39,15 @@ export function useUpsertFeeTemplate() {
       section,
       label,
       amount,
+      allowInstallment,
       id,
     }: {
       section: string;
       label: string;
       amount: number;
+      allowInstallment: boolean;
       id?: string;
-    }) => upsertFeeTemplate(section, label, amount, id),
+    }) => upsertFeeTemplate(section, label, amount, allowInstallment, id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["fee-templates"] }),
   });
 }

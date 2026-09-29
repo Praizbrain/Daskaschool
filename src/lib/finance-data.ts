@@ -20,6 +20,7 @@ export type PaymentItem = {
   label: string;
   amount: number;
   source: "class" | "template" | "class-override";
+  allowInstallment: boolean;
 };
 
 export async function fetchStudentPaymentItems(
@@ -32,8 +33,14 @@ export async function fetchStudentPaymentItems(
       .select("tuition_fee, books_fee")
       .eq("id", classId)
       .maybeSingle(),
-    supabase.from("fee_templates").select("id, label, amount").eq("section", section),
-    supabase.from("class_fee_items").select("id, label, amount").eq("class_id", classId),
+    supabase
+      .from("fee_templates")
+      .select("id, label, amount, allow_installment")
+      .eq("section", section),
+    supabase
+      .from("class_fee_items")
+      .select("id, label, amount, allow_installment")
+      .eq("class_id", classId),
   ]);
 
   if (classRes.error) throw classRes.error;
@@ -47,10 +54,22 @@ export async function fetchStudentPaymentItems(
     const tuition = Number(classRes.data.tuition_fee);
     const books = Number(classRes.data.books_fee);
     if (tuition > 0 || true) {
-      items.push({ id: "school-fees", label: "School Fees", amount: tuition, source: "class" });
+      items.push({
+        id: "school-fees",
+        label: "School Fees",
+        amount: tuition,
+        source: "class",
+        allowInstallment: false,
+      });
     }
     if (books > 0 || true) {
-      items.push({ id: "books-fee", label: "Books", amount: books, source: "class" });
+      items.push({
+        id: "books-fee",
+        label: "Books",
+        amount: books,
+        source: "class",
+        allowInstallment: false,
+      });
     }
   }
 
@@ -68,10 +87,17 @@ export async function fetchStudentPaymentItems(
         label: t.label,
         amount: Number(override.amount),
         source: "class-override",
+        allowInstallment: override.allow_installment,
       });
       overridesByLabel.delete(t.label.toLowerCase()); // consumed
     } else {
-      items.push({ id: t.id, label: t.label, amount: Number(t.amount), source: "template" });
+      items.push({
+        id: t.id,
+        label: t.label,
+        amount: Number(t.amount),
+        source: "template",
+        allowInstallment: t.allow_installment,
+      });
     }
   }
 
@@ -82,6 +108,7 @@ export async function fetchStudentPaymentItems(
       label: remaining.label,
       amount: Number(remaining.amount),
       source: "class-override",
+      allowInstallment: remaining.allow_installment,
     });
   }
 

@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { Toaster } from "../components/ui/sonner";
 import { ThemeProvider } from "../lib/theme-provider";
+import { PaymentModalProvider } from "@/context/payment-modal-context";
 
 function NotFoundComponent() {
   return (
@@ -133,12 +134,13 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-        <Toaster position="top-right" richColors />
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <PaymentModalProvider>
+          <Outlet />
+          <Toaster position="top-right" richColors />
+        </PaymentModalProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }

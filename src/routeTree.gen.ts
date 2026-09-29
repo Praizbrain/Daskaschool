@@ -20,7 +20,6 @@ import { Route as TargetsRouteImport } from './routes/targets'
 import { Route as ClassesIndexRouteImport } from './routes/classes.index'
 import { Route as ClassesClassIdRouteImport } from './routes/classes.$classId'
 import { Route as FinanceIndexRouteImport } from './routes/finance.index'
-import { Route as FinanceRecordPaymentRouteImport } from './routes/finance.record-payment'
 import { Route as StudentsIndexRouteImport } from './routes/students.index'
 import { Route as StudentsStudentIdRouteImport } from './routes/students.$studentId'
 import { Route as StudentsNewRouteImport } from './routes/students.new'
@@ -80,11 +79,6 @@ const FinanceIndexRoute = FinanceIndexRouteImport.update({
   path: '/finance/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FinanceRecordPaymentRoute = FinanceRecordPaymentRouteImport.update({
-  id: '/finance/record-payment',
-  path: '/finance/record-payment',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const StudentsIndexRoute = StudentsIndexRouteImport.update({
   id: '/students/',
   path: '/students/',
@@ -111,7 +105,6 @@ export interface FileRoutesByFullPath {
   '/staff': typeof StaffRoute
   '/targets': typeof TargetsRoute
   '/classes/$classId': typeof ClassesClassIdRoute
-  '/finance/record-payment': typeof FinanceRecordPaymentRoute
   '/students/$studentId': typeof StudentsStudentIdRoute
   '/students/new': typeof StudentsNewRoute
   '/classes/': typeof ClassesIndexRoute
@@ -128,7 +121,6 @@ export interface FileRoutesByTo {
   '/staff': typeof StaffRoute
   '/targets': typeof TargetsRoute
   '/classes/$classId': typeof ClassesClassIdRoute
-  '/finance/record-payment': typeof FinanceRecordPaymentRoute
   '/students/$studentId': typeof StudentsStudentIdRoute
   '/students/new': typeof StudentsNewRoute
   '/classes': typeof ClassesIndexRoute
@@ -146,7 +138,6 @@ export interface FileRoutesById {
   '/staff': typeof StaffRoute
   '/targets': typeof TargetsRoute
   '/classes/$classId': typeof ClassesClassIdRoute
-  '/finance/record-payment': typeof FinanceRecordPaymentRoute
   '/students/$studentId': typeof StudentsStudentIdRoute
   '/students/new': typeof StudentsNewRoute
   '/classes/': typeof ClassesIndexRoute
@@ -165,7 +156,6 @@ export interface FileRouteTypes {
     | '/staff'
     | '/targets'
     | '/classes/$classId'
-    | '/finance/record-payment'
     | '/students/$studentId'
     | '/students/new'
     | '/classes/'
@@ -182,7 +172,6 @@ export interface FileRouteTypes {
     | '/staff'
     | '/targets'
     | '/classes/$classId'
-    | '/finance/record-payment'
     | '/students/$studentId'
     | '/students/new'
     | '/classes'
@@ -199,7 +188,6 @@ export interface FileRouteTypes {
     | '/staff'
     | '/targets'
     | '/classes/$classId'
-    | '/finance/record-payment'
     | '/students/$studentId'
     | '/students/new'
     | '/classes/'
@@ -217,7 +205,6 @@ export interface RootRouteChildren {
   StaffRoute: typeof StaffRoute
   TargetsRoute: typeof TargetsRoute
   ClassesClassIdRoute: typeof ClassesClassIdRoute
-  FinanceRecordPaymentRoute: typeof FinanceRecordPaymentRoute
   StudentsStudentIdRoute: typeof StudentsStudentIdRoute
   StudentsNewRoute: typeof StudentsNewRoute
   ClassesIndexRoute: typeof ClassesIndexRoute
@@ -304,13 +291,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FinanceIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/finance/record-payment': {
-      id: '/finance/record-payment'
-      path: '/finance/record-payment'
-      fullPath: '/finance/record-payment'
-      preLoaderRoute: typeof FinanceRecordPaymentRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/students/': {
       id: '/students/'
       path: '/students'
@@ -345,7 +325,6 @@ const rootRouteChildren: RootRouteChildren = {
   StaffRoute: StaffRoute,
   TargetsRoute: TargetsRoute,
   ClassesClassIdRoute: ClassesClassIdRoute,
-  FinanceRecordPaymentRoute: FinanceRecordPaymentRoute,
   StudentsStudentIdRoute: StudentsStudentIdRoute,
   StudentsNewRoute: StudentsNewRoute,
   ClassesIndexRoute: ClassesIndexRoute,
