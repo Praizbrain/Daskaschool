@@ -8,7 +8,7 @@ know what is done, what is in progress, and what is next.
 ## Current Status
 
 **Phase:** Phase 1 — Foundation, in progress.
-**Last completed:** Real Supabase Auth sign-in working on the index route (`signInWithPassword`).
+**Last completed:** Fee template and inventory payment wiring update, build verified. Live browser verification remains pending.
 **Next:** Database Setup — create tables, trigger, RLS policies, seed real school data.
 
 ---
@@ -112,3 +112,10 @@ know what is done, what is in progress, and what is next.
 
 _Add notes here as the build progresses — workarounds, patterns, anything that differs from
 the context files._
+
+## 2026-10-01 Update
+
+- Fee template amount inputs now accept zero.
+- Required inventory assigned to a class contributes to expected revenue. Optional inventory contributes only after a sale.
+- Record Payment now loads assigned inventory through the same shared modal used from each entry point.
+- See `docs/user-guide.md` for the manual login to logout test journey. Live browser testing is still required.

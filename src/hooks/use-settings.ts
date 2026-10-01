@@ -4,6 +4,7 @@ import {
   createTeacher,
   deleteFeeTemplate,
   deleteTeacher,
+  fetchClassFeeAssignments,
   fetchClassTeachers,
   fetchFeeTemplates,
   fetchSchoolSettings,
@@ -12,6 +13,7 @@ import {
   removeTeacherFromClass,
   updateSchoolSettings,
   updateTeacher,
+  upsertClassFeeAssignment,
   upsertFeeTemplate,
   type SchoolSettings,
 } from "@/lib/settings-data";
@@ -124,4 +126,34 @@ export function useRemoveTeacherFromClass() {
 }
 export function useStaffAccounts() {
   return useQuery({ queryKey: ["staff-accounts"], queryFn: fetchStaffAccounts });
+}
+export function useClassFeeAssignments(templateId: string) {
+  return useQuery({
+    queryKey: ["class-fee-assignments", templateId],
+    queryFn: () => fetchClassFeeAssignments(templateId),
+    enabled: !!templateId,
+  });
+}
+export function useUpsertClassFeeAssignment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      classId,
+      templateId,
+      amountOverride,
+      isActive,
+    }: {
+      classId: string;
+      templateId: string;
+      amountOverride: number | null;
+      isActive: boolean;
+    }) => upsertClassFeeAssignment(classId, templateId, amountOverride, isActive),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["class-fee-assignments"] });
+      qc.invalidateQueries({ queryKey: ["fee-templates"] });
+      qc.invalidateQueries({ queryKey: ["classes"] });
+      qc.invalidateQueries({ queryKey: ["class"], exact: false });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
 }

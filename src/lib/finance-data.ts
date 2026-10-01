@@ -1,114 +1,87 @@
 import { supabase } from "@/lib/supabase-client";
 import { fetchClasses } from "@/lib/classes-data";
+import { getEffectiveFeesForClass } from "@/lib/fee-utils";
+import { fetchClassInventoryItems } from "@/lib/inventory-data";
 
 /**
  * Builds the dynamic item list for the Record Payment form when a student is
- * selected. Merges three sources in order of specificity:
+ * selected. Merges two sources in order of specificity:
  *
- * 1. Class base fees: School Fees (tuition) + Books Fee — always the actual
- *    amounts from the student's class record, never a global number.
- * 2. Section-level templates (fee_templates filtered by section) — items like
- *    Uniform, Sportswear, Exam Fee set once per section.
- * 3. Class-specific overrides/extras (class_fee_items) — if same label as a
- *    template, the class-specific price wins; if a new label, it's an extra
- *    charge unique to that class.
+ * 1. Fee templates + class_fee_assignments (resolved via getEffectiveFeesForClass)
+ *    — "School Fees", "Exam Fee", "Uniform", etc. set per-section with optional
+ *    per-class overrides. "Books" is returned as a zero-amount placeholder until
+ *    Phase 8 (Inventory).
+ * 2. Class-specific extras (class_fee_items) — custom charges unique to that
+ *    class, layered on top.
  *
+ * The old classes_staff_view.tuition_fee / books_fee columns are no longer read.
  * The price_list table is retired — nothing here reads from it.
  */
 export type PaymentItem = {
   id: string; // stable key for React, not a DB id for custom/merged items
   label: string;
   amount: number;
-  source: "class" | "template" | "class-override";
+  source: "template" | "class-override" | "inventory";
   allowInstallment: boolean;
+  inventoryItemId?: string;
+  isRequired?: boolean;
+  isOutOfStock?: boolean;
 };
 
 export async function fetchStudentPaymentItems(
   classId: string,
   section: string,
 ): Promise<PaymentItem[]> {
-  const [classRes, templatesRes, overridesRes] = await Promise.all([
-    supabase
-      .from("classes_staff_view")
-      .select("tuition_fee, books_fee")
-      .eq("id", classId)
-      .maybeSingle(),
-    supabase
-      .from("fee_templates")
-      .select("id, label, amount, allow_installment")
-      .eq("section", section),
+  const [effectiveFees, overridesRes, inventoryItems] = await Promise.all([
+    getEffectiveFeesForClass(classId, section),
     supabase
       .from("class_fee_items")
       .select("id, label, amount, allow_installment")
       .eq("class_id", classId),
+    fetchClassInventoryItems(classId),
   ]);
 
-  if (classRes.error) throw classRes.error;
-  if (templatesRes.error) throw templatesRes.error;
   if (overridesRes.error) throw overridesRes.error;
 
   const items: PaymentItem[] = [];
 
-  // 1. Class base fees
-  if (classRes.data) {
-    const tuition = Number(classRes.data.tuition_fee);
-    const books = Number(classRes.data.books_fee);
-    if (tuition > 0 || true) {
-      items.push({
-        id: "school-fees",
-        label: "School Fees",
-        amount: tuition,
-        source: "class",
-        allowInstallment: false,
-      });
-    }
-    if (books > 0 || true) {
-      items.push({
-        id: "books-fee",
-        label: "Books",
-        amount: books,
-        source: "class",
-        allowInstallment: false,
-      });
-    }
-  }
+  // 1. Fee templates resolved through class_fee_assignments
+  for (const fee of effectiveFees) {
+    if (!fee.isActive) continue; // Inactive fee for this class — skip
 
-  // 2. Section templates — build a map first so class overrides can replace them
-  const overridesByLabel = new Map(
-    (overridesRes.data ?? []).map((o) => [o.label.toLowerCase(), o]),
-  );
-
-  for (const t of templatesRes.data ?? []) {
-    const override = overridesByLabel.get(t.label.toLowerCase());
-    if (override) {
-      // Class-specific price wins
-      items.push({
-        id: override.id,
-        label: t.label,
-        amount: Number(override.amount),
-        source: "class-override",
-        allowInstallment: override.allow_installment,
-      });
-      overridesByLabel.delete(t.label.toLowerCase()); // consumed
-    } else {
-      items.push({
-        id: t.id,
-        label: t.label,
-        amount: Number(t.amount),
-        source: "template",
-        allowInstallment: t.allow_installment,
-      });
-    }
-  }
-
-  // 3. Remaining class-specific extras (labels not in any template)
-  for (const remaining of overridesByLabel.values()) {
     items.push({
-      id: remaining.id,
-      label: remaining.label,
-      amount: Number(remaining.amount),
+      id: fee.templateId,
+      label: fee.label,
+      amount: fee.effectiveAmount,
+      source: fee.isOverride ? "class-override" : "template",
+      allowInstallment: fee.allowInstallment,
+    });
+  }
+
+  // 2. Class-specific extras (class_fee_items) — layered on top
+  const templateLabels = new Set(effectiveFees.map((f) => f.label.toLowerCase()));
+  for (const extra of overridesRes.data ?? []) {
+    // Skip if same label already covered by a template
+    if (templateLabels.has(extra.label.toLowerCase())) continue;
+    items.push({
+      id: extra.id,
+      label: extra.label,
+      amount: Number(extra.amount),
       source: "class-override",
-      allowInstallment: remaining.allow_installment,
+      allowInstallment: extra.allow_installment,
+    });
+  }
+
+  for (const inventory of inventoryItems) {
+    items.push({
+      id: `inventory-${inventory.id}`,
+      label: inventory.name,
+      amount: inventory.sellingPrice,
+      source: "inventory",
+      allowInstallment: false,
+      inventoryItemId: inventory.id,
+      isRequired: inventory.isRequired,
+      isOutOfStock: inventory.isOutOfStock,
     });
   }
 

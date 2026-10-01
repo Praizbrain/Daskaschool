@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase-client";
+import { getEffectiveFeeTotal } from "@/lib/fee-utils";
 
 export type DashboardData = {
   school: { name: string; session: string; term: string };
@@ -13,7 +14,6 @@ export type DashboardData = {
     studentCount: number;
     avgFee: number;
     discounts: number;
-    extraCharges: number;
     receiptsToday: number;
     expensesToday: number;
     studentsOwingCount: number;
@@ -65,9 +65,7 @@ function studentStatus(paid: number, expected: number): "Paid" | "Part Payment" 
 export async function fetchDashboardData(): Promise<DashboardData> {
   const [schoolRes, classesRes, studentsRes, paymentsRes, expensesRes] = await Promise.all([
     supabase.from("school_settings").select("name, current_session, current_term").single(),
-    supabase
-      .from("classes_staff_view")
-      .select("id, name, section, tuition_fee, books_fee, other_charges"),
+    supabase.from("classes_staff_view").select("id, name, section"),
     // IMPORTANT: only active (non-archived) students count toward expected revenue
     supabase
       .from("students")
@@ -97,6 +95,15 @@ export async function fetchDashboardData(): Promise<DashboardData> {
 
   const classById = new Map(classes.map((c) => [c.id, c]));
 
+  // Resolve effective fee totals per class (from fee_templates + class_fee_assignments)
+  const grossByClass = new Map<string, number>();
+  await Promise.all(
+    classes.map(async (c) => {
+      const total = await getEffectiveFeeTotal(c.id, c.section);
+      grossByClass.set(c.id, total);
+    }),
+  );
+
   // Collected revenue includes ALL payments (including from archived students)
   // because the school genuinely received that money — it doesn't disappear
   // just because a student later left. Only EXPECTED revenue excludes archived.
@@ -107,23 +114,19 @@ export async function fetchDashboardData(): Promise<DashboardData> {
 
   let expectedRevenue = 0;
   let discounts = 0;
-  let extraCharges = 0;
   let grossFeeSum = 0;
 
   const studentDetails = students.map((s) => {
     const klass = classById.get(s.class_id);
-    const tuition = Number(klass?.tuition_fee ?? 0);
-    const books = Number(klass?.books_fee ?? 0);
-    const other = Number(klass?.other_charges ?? 0);
+    const gross = grossByClass.get(s.class_id) ?? 0;
     const discount = Number(s.discount ?? 0);
-    const expected = tuition + books + other - discount;
+    const expected = Math.max(gross - discount, 0);
     const paid = paidByStudent.get(s.id) ?? 0;
     const outstanding = Math.max(expected - paid, 0);
 
     expectedRevenue += expected;
     discounts += discount;
-    extraCharges += other;
-    grossFeeSum += tuition + books;
+    grossFeeSum += gross;
 
     return {
       id: s.id,
@@ -251,7 +254,6 @@ export async function fetchDashboardData(): Promise<DashboardData> {
       studentCount,
       avgFee,
       discounts,
-      extraCharges,
       receiptsToday,
       expensesToday,
       studentsOwingCount: studentDetails.filter((sd) => sd.outstanding > 0).length,

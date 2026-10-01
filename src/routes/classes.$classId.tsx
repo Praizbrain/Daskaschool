@@ -1,6 +1,6 @@
 import { PageLoadingSkeleton } from "@/components/fin/loading-skeleton";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
-import { ArrowLeft, Users } from "lucide-react";
+import { ArrowLeft, ExternalLink, Users } from "lucide-react";
 import { AppShell } from "@/components/fin/app-shell";
 import {
   EmptyState,
@@ -136,6 +136,75 @@ function ClassDetails() {
           </>
         )}
       </div>
+
+      {/* ── Fee structure panel ──────────────────────────────────────── */}
+      <Panel
+        className="mt-6"
+        title="Fee structure"
+        description={`Fees applied to ${klass.name} this term`}
+        action={
+          <Link
+            to="/settings"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+          >
+            Edit fee templates in Settings <ExternalLink className="size-3.5" />
+          </Link>
+        }
+        bodyClassName="p-0"
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[540px] text-sm">
+            <thead>
+              <tr className="border-b border-border text-left">
+                {["Fee", "Section default", "Class amount", "Active"].map((h) => (
+                  <th
+                    key={h}
+                    className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {klass.feeBreakdown.map((f) => {
+                const isBooks = f.label.toLowerCase() === "books";
+                return (
+                  <tr key={f.label} className="hover:bg-muted/60">
+                    <td className="px-6 py-4 font-semibold">{f.label}</td>
+                    <td className="px-6 py-4 text-muted-foreground">
+                      {isBooks ? "—" : <Money value={f.sectionAmount} />}
+                    </td>
+                    <td className="px-6 py-4">
+                      {isBooks ? (
+                        <span className="text-xs text-muted-foreground italic">(Phase 8)</span>
+                      ) : (
+                        <Money value={f.effectiveAmount} className="font-semibold" />
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      {isBooks ? (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      ) : (
+                        <StatusBadge tone={f.isActive ? "success" : "danger"}>
+                          {f.isActive ? "Active" : "Inactive"}
+                        </StatusBadge>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+              {klass.feeBreakdown.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-6 py-8 text-center text-sm text-muted-foreground">
+                    No fee templates found for the {klass.section} section.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Panel>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[380px_1fr]">
         <Panel title="Payment completion">

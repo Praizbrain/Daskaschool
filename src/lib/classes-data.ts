@@ -1,4 +1,6 @@
 import { supabase } from "@/lib/supabase-client";
+import { getEffectiveFeesForClass, getEffectiveFeeTotal, type EffectiveFee } from "@/lib/fee-utils";
+import { fetchRequiredClassInventoryItems } from "@/lib/inventory-data";
 
 export type PaymentStatus = "Paid" | "Part Payment" | "Owing";
 
@@ -14,6 +16,13 @@ export type ClassListItem = {
   collectionPct: number;
 };
 
+export type FeeBreakdownItem = {
+  label: string;
+  sectionAmount: number;
+  effectiveAmount: number;
+  isActive: boolean;
+};
+
 export type ClassStudentRow = {
   id: string;
   name: string;
@@ -23,9 +32,7 @@ export type ClassStudentRow = {
 };
 
 export type ClassDetail = ClassListItem & {
-  tuitionFee: number;
-  booksFee: number;
-  otherCharges: number;
+  feeBreakdown: FeeBreakdownItem[];
   teacherSalary: number | null;
   classExpenses: number;
   estimatedProfit: number | null;
@@ -45,10 +52,7 @@ function pct(part: number, whole: number): number {
 
 export async function fetchClasses(): Promise<ClassListItem[]> {
   const [classesRes, studentsRes, paymentsRes] = await Promise.all([
-    supabase
-      .from("classes_staff_view")
-      .select("id, name, section, teacher_name, tuition_fee, books_fee, other_charges")
-      .order("name"),
+    supabase.from("classes_staff_view").select("id, name, section, teacher_name").order("name"),
     supabase.from("students").select("id, class_id, discount").is("archived_at", null),
     supabase.from("payments").select("student_id, amount"),
   ]);
@@ -69,8 +73,18 @@ export async function fetchClasses(): Promise<ClassListItem[]> {
     studentsByClass.set(s.class_id, list);
   }
 
-  return (classesRes.data ?? []).map((c) => {
-    const gross = Number(c.tuition_fee) + Number(c.books_fee) + Number(c.other_charges);
+  // Fetch effective fee totals for each unique class
+  const classRows = classesRes.data ?? [];
+  const grossByClass = new Map<string, number>();
+  await Promise.all(
+    classRows.map(async (c) => {
+      const total = await getEffectiveFeeTotal(c.id, c.section);
+      grossByClass.set(c.id, total);
+    }),
+  );
+
+  return classRows.map((c) => {
+    const gross = grossByClass.get(c.id) ?? 0;
     const roster = studentsByClass.get(c.id) ?? [];
     const expected = roster.reduce((sum, s) => sum + Math.max(gross - s.discount, 0), 0);
     const collected = roster.reduce((sum, s) => sum + s.paid, 0);
@@ -94,7 +108,7 @@ export async function fetchClass(
 ): Promise<ClassDetail | null> {
   const { data: c, error } = await supabase
     .from("classes_staff_view")
-    .select("id, name, section, teacher_name, tuition_fee, books_fee, other_charges")
+    .select("id, name, section, teacher_name")
     .eq("id", classId)
     .maybeSingle();
   if (error) throw error;
@@ -111,7 +125,9 @@ export async function fetchClass(
     teacherSalary = fullRow ? Number(fullRow.teacher_salary) : null;
   }
 
-  const [studentsRes, expensesRes] = await Promise.all([
+  const [effectiveFees, requiredInventoryItems, studentsRes, expensesRes] = await Promise.all([
+    getEffectiveFeesForClass(classId, c.section),
+    fetchRequiredClassInventoryItems(classId),
     supabase
       .from("students")
       .select("id, full_name, guardian_name, discount")
@@ -121,6 +137,25 @@ export async function fetchClass(
   ]);
   if (studentsRes.error) throw studentsRes.error;
   if (expensesRes.error) throw expensesRes.error;
+
+  const feeBreakdown: FeeBreakdownItem[] = [
+    ...effectiveFees.map((fee) => ({
+      label: fee.label,
+      sectionAmount: fee.sectionAmount,
+      effectiveAmount: fee.effectiveAmount,
+      isActive: fee.isActive,
+    })),
+    ...requiredInventoryItems.map((item) => ({
+      label: `${item.name} (Required inventory)`,
+      sectionAmount: item.sellingPrice,
+      effectiveAmount: item.sellingPrice,
+      isActive: true,
+    })),
+  ];
+
+  const gross = feeBreakdown
+    .filter((item) => item.isActive)
+    .reduce((sum, item) => sum + item.effectiveAmount, 0);
 
   const studentIds = (studentsRes.data ?? []).map((s) => s.id);
   const paidByStudent = new Map<string, number>();
@@ -135,7 +170,6 @@ export async function fetchClass(
     }
   }
 
-  const gross = Number(c.tuition_fee) + Number(c.books_fee) + Number(c.other_charges);
   const students: ClassStudentRow[] = (studentsRes.data ?? []).map((s) => {
     const discount = Number(s.discount ?? 0);
     const expected = Math.max(gross - discount, 0);
@@ -168,9 +202,7 @@ export async function fetchClass(
     collected,
     outstanding: Math.max(expected - collected, 0),
     collectionPct: pct(collected, expected),
-    tuitionFee: Number(c.tuition_fee),
-    booksFee: Number(c.books_fee),
-    otherCharges: Number(c.other_charges),
+    feeBreakdown,
     teacherSalary,
     classExpenses,
     estimatedProfit,
@@ -181,9 +213,6 @@ export async function fetchClass(
 export type UpdateClassInput = {
   teacherName: string;
   teacherSalary: number;
-  tuitionFee: number;
-  booksFee: number;
-  otherCharges: number;
 };
 
 export async function updateClass(classId: string, input: UpdateClassInput): Promise<void> {
@@ -192,9 +221,6 @@ export async function updateClass(classId: string, input: UpdateClassInput): Pro
     .update({
       teacher_name: input.teacherName || null,
       teacher_salary: input.teacherSalary,
-      tuition_fee: input.tuitionFee,
-      books_fee: input.booksFee,
-      other_charges: input.otherCharges,
     })
     .eq("id", classId);
   if (error) throw error;

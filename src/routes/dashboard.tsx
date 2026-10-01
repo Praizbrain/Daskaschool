@@ -174,8 +174,6 @@ function Dashboard() {
           <Formula label="Average fee" value={naira(metrics.avgFee)} />
           <Operator sign="−" />
           <Formula label="Discounts" value={naira(metrics.discounts)} tone="gold" />
-          <Operator sign="+" />
-          <Formula label="Extra charges" value={naira(metrics.extraCharges)} tone="gold" />
           <Operator sign="=" />
           <Formula label="Expected revenue" value={naira(metrics.expectedRevenue)} tone="primary" />
         </div>

@@ -92,6 +92,69 @@ export async function deleteFeeTemplate(id: string): Promise<void> {
   if (error) throw error;
 }
 
+// ── Class Fee Assignments ──────────────────────────────────────────
+
+export type ClassFeeAssignment = {
+  id: string;
+  classId: string;
+  className: string;
+  feeTemplateId: string;
+  amountOverride: number | null;
+  isActive: boolean;
+};
+
+/**
+ * Fetch all class_fee_assignments for a given fee template,
+ * enriched with class names.
+ */
+export async function fetchClassFeeAssignments(templateId: string): Promise<ClassFeeAssignment[]> {
+  const { data, error } = await supabase
+    .from("class_fee_assignments")
+    .select("id, class_id, fee_template_id, amount_override, is_active")
+    .eq("fee_template_id", templateId);
+  if (error) throw error;
+  if (!data || data.length === 0) return [];
+
+  const classIds = Array.from(new Set(data.map((r) => r.class_id)));
+  const { data: classRows, error: cErr } = await supabase
+    .from("classes_staff_view")
+    .select("id, name")
+    .in("id", classIds);
+  if (cErr) throw cErr;
+
+  const classNameById = new Map((classRows ?? []).map((c) => [c.id, c.name]));
+
+  return data.map((r) => ({
+    id: r.id,
+    classId: r.class_id,
+    className: classNameById.get(r.class_id) ?? "Unknown",
+    feeTemplateId: r.fee_template_id,
+    amountOverride: r.amount_override != null ? Number(r.amount_override) : null,
+    isActive: r.is_active,
+  }));
+}
+
+/**
+ * Insert or update a class_fee_assignment (upsert on class_id + fee_template_id).
+ */
+export async function upsertClassFeeAssignment(
+  classId: string,
+  templateId: string,
+  amountOverride: number | null,
+  isActive: boolean,
+): Promise<void> {
+  const { error } = await supabase.from("class_fee_assignments").upsert(
+    {
+      class_id: classId,
+      fee_template_id: templateId,
+      amount_override: amountOverride,
+      is_active: isActive,
+    },
+    { onConflict: "class_id,fee_template_id" },
+  );
+  if (error) throw error;
+}
+
 export type Teacher = { id: string; fullName: string; defaultSalary: number };
 
 export async function fetchTeachers(): Promise<Teacher[]> {

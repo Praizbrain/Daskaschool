@@ -13,6 +13,7 @@ import { useClasses } from "@/hooks/use-classes";
 import { naira } from "@/lib/school-data";
 import {
   useAssignTeacher,
+  useClassFeeAssignments,
   useClassTeachers,
   useCreateTeacher,
   useDeleteFeeTemplate,
@@ -24,9 +25,10 @@ import {
   useTeachers,
   useUpdateSchoolSettings,
   useUpdateTeacher,
+  useUpsertClassFeeAssignment,
   useUpsertFeeTemplate,
 } from "@/hooks/use-settings";
-import { SECTIONS } from "@/lib/settings-data";
+import { SECTIONS, type ClassFeeAssignment } from "@/lib/settings-data";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Settings — DaskaSchool" }] }),
@@ -164,10 +166,11 @@ function FeeTemplatesTab() {
   const remove = useDeleteFeeTemplate();
   const [adding, setAdding] = useState<string | null>(null);
   const [newLabel, setNewLabel] = useState("");
-  const [newAmount, setNewAmount] = useState<number | "">("");
+  const [newAmount, setNewAmount] = useState("");
   const [newAllowInstallment, setNewAllowInstallment] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [editAmount, setEditAmount] = useState<number | "">("");
+  const [editAmount, setEditAmount] = useState("");
+  const [expandedTemplate, setExpandedTemplate] = useState<string | null>(null);
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
 
@@ -177,7 +180,7 @@ function FeeTemplatesTab() {
   }));
 
   const handleAdd = async (section: string) => {
-    if (!newLabel.trim() || !newAmount) return;
+    if (!newLabel.trim() || newAmount === "" || Number(newAmount) < 0) return;
     try {
       await upsert.mutateAsync({
         section,
@@ -196,7 +199,7 @@ function FeeTemplatesTab() {
   };
 
   const handleSaveEdit = async (id: string, section: string, label: string) => {
-    if (!editAmount) return;
+    if (editAmount === "" || Number(editAmount) < 0) return;
     try {
       await upsert.mutateAsync({
         section,
@@ -225,8 +228,8 @@ function FeeTemplatesTab() {
     <div className="space-y-6">
       <p className="text-sm text-muted-foreground">
         Fee templates set default item prices per section. They flow automatically to every class in
-        that section when recording a payment. Override individual amounts per class from the
-        Classes page.
+        that section when recording a payment. Override individual amounts per class using the
+        "Class-specific overrides" panel below each template.
       </p>
       {bySection.map(({ section, items }) => (
         <Panel
@@ -254,68 +257,91 @@ function FeeTemplatesTab() {
           ) : (
             <div className="divide-y divide-border">
               {items.map((item) => (
-                <div key={item.id} className="flex items-center gap-4 px-6 py-4">
-                  <p className="flex-1 text-sm font-semibold">{item.label}</p>
-                  <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <input
-                      type="checkbox"
-                      checked={item.allowInstallment}
-                      onChange={(event) =>
-                        upsert.mutate(
-                          {
-                            section: item.section,
-                            label: item.label,
-                            amount: item.amount,
-                            allowInstallment: event.target.checked,
-                            id: item.id,
-                          },
-                          {
-                            onSuccess: () => toast.success("Installment setting updated."),
-                            onError: () => toast.error("Couldn't update installment setting."),
-                          },
-                        )
+                <div key={item.id}>
+                  <div className="flex items-center gap-4 px-6 py-4">
+                    <button
+                      onClick={() =>
+                        setExpandedTemplate(expandedTemplate === item.id ? null : item.id)
                       }
-                      className="size-4 accent-[color:var(--primary)]"
-                    />
-                    Allow installment
-                  </label>
-                  {editId === item.id ? (
-                    <div className="flex items-center gap-2">
+                      className="flex items-center gap-2 text-sm font-semibold hover:text-primary"
+                    >
+                      <span
+                        className={`inline-block transition-transform ${expandedTemplate === item.id ? "rotate-90" : ""}`}
+                      >
+                        ▸
+                      </span>
+                      {item.label}
+                    </button>
+                    <div className="flex-1" />
+                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
                       <input
-                        type="number"
-                        value={editAmount}
-                        onChange={(e) => setEditAmount(Number(e.target.value))}
-                        className="num h-9 w-32 rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary"
+                        type="checkbox"
+                        checked={item.allowInstallment}
+                        onChange={(event) =>
+                          upsert.mutate(
+                            {
+                              section: item.section,
+                              label: item.label,
+                              amount: item.amount,
+                              allowInstallment: event.target.checked,
+                              id: item.id,
+                            },
+                            {
+                              onSuccess: () => toast.success("Installment setting updated."),
+                              onError: () => toast.error("Couldn't update installment setting."),
+                            },
+                          )
+                        }
+                        className="size-4 accent-[color:var(--primary)]"
                       />
-                      <button
-                        onClick={() => handleSaveEdit(item.id, item.section, item.label)}
-                        className="h-9 rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground"
-                      >
-                        Save
-                      </button>
-                      <button onClick={() => setEditId(null)} className="text-muted-foreground">
-                        <X className="size-4" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      <Money value={item.amount} className="text-sm font-semibold" />
-                      <button
-                        onClick={() => {
-                          setEditId(item.id);
-                          setEditAmount(item.amount);
-                        }}
-                        className="text-muted-foreground hover:text-foreground"
-                      >
-                        <Pencil className="size-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(item.id, item.label)}
-                        className="text-muted-foreground hover:text-destructive"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </button>
-                    </div>
+                      Allow installment
+                    </label>
+                    {editId === item.id ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          value={editAmount}
+                          onChange={(e) => setEditAmount(e.target.value)}
+                          className="num h-9 w-32 rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary"
+                        />
+                        <button
+                          onClick={() => handleSaveEdit(item.id, item.section, item.label)}
+                          className="h-9 rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground"
+                        >
+                          Save
+                        </button>
+                        <button onClick={() => setEditId(null)} className="text-muted-foreground">
+                          <X className="size-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <Money value={item.amount} className="text-sm font-semibold" />
+                        <button
+                          onClick={() => {
+                            setEditId(item.id);
+                            setEditAmount(String(item.amount));
+                          }}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          <Pencil className="size-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id, item.label)}
+                          className="text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  {/* ── Class-specific overrides ───────────────── */}
+                  {expandedTemplate === item.id && (
+                    <ClassOverridesPanel
+                      templateId={item.id}
+                      section={section}
+                      sectionAmount={item.amount}
+                    />
                   )}
                 </div>
               ))}
@@ -330,7 +356,7 @@ function FeeTemplatesTab() {
                   <input
                     type="number"
                     value={newAmount}
-                    onChange={(e) => setNewAmount(Number(e.target.value))}
+                    onChange={(e) => setNewAmount(e.target.value)}
                     placeholder="Amount (₦)"
                     className="num h-10 w-32 rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary"
                   />
@@ -358,6 +384,191 @@ function FeeTemplatesTab() {
           )}
         </Panel>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Inline sub-panel that shows class-specific overrides for one fee template.
+ * Rendered inside the expanded row of the FeeTemplatesTab.
+ */
+function ClassOverridesPanel({
+  templateId,
+  section,
+  sectionAmount,
+}: {
+  templateId: string;
+  section: string;
+  sectionAmount: number;
+}) {
+  const { data: classes } = useClasses(false);
+  const { data: assignments, isLoading } = useClassFeeAssignments(templateId);
+  const upsertAssignment = useUpsertClassFeeAssignment();
+  const [editingClassId, setEditingClassId] = useState<string | null>(null);
+  const [overrideAmount, setOverrideAmount] = useState<number | "">("");
+
+  const sectionClasses = (classes ?? []).filter((c) => c.section === section);
+
+  if (isLoading) {
+    return (
+      <div className="bg-muted/40 px-10 py-4 text-sm text-muted-foreground">
+        Loading class overrides…
+      </div>
+    );
+  }
+
+  const assignmentByClass = new Map((assignments ?? []).map((a) => [a.classId, a]));
+
+  const handleToggleActive = async (
+    classId: string,
+    currentAssignment: ClassFeeAssignment | undefined,
+    newActive: boolean,
+  ) => {
+    await upsertAssignment.mutateAsync({
+      classId,
+      templateId,
+      amountOverride: currentAssignment?.amountOverride ?? null,
+      isActive: newActive,
+    });
+    toast.success(newActive ? "Fee activated for this class." : "Fee deactivated for this class.");
+  };
+
+  const handleSaveOverride = async (classId: string) => {
+    const existing = assignmentByClass.get(classId);
+    await upsertAssignment.mutateAsync({
+      classId,
+      templateId,
+      amountOverride: overrideAmount === "" ? null : Number(overrideAmount),
+      isActive: existing?.isActive ?? true,
+    });
+    toast.success(
+      overrideAmount === "" ? "Override removed — using section amount." : "Override amount saved.",
+    );
+    setEditingClassId(null);
+    setOverrideAmount("");
+  };
+
+  return (
+    <div className="border-t border-border bg-muted/30 px-6 py-4">
+      <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        Class-specific overrides
+      </p>
+      {sectionClasses.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No classes in this section.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left">
+                {["Class", "Uses section amount?", "Override amount", "Active"].map((h) => (
+                  <th
+                    key={h}
+                    className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {sectionClasses.map((cls) => {
+                const assignment = assignmentByClass.get(cls.id);
+                const hasOverride = assignment?.amountOverride != null;
+                const isActive = assignment ? assignment.isActive : true;
+                const isEditing = editingClassId === cls.id;
+
+                return (
+                  <tr key={cls.id} className="hover:bg-muted/60">
+                    <td className="px-3 py-2.5 font-semibold">{cls.name}</td>
+                    <td className="px-3 py-2.5 text-muted-foreground">
+                      {hasOverride ? "No" : "Yes"}
+                    </td>
+                    <td className="px-3 py-2.5">
+                      {isEditing ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            value={overrideAmount}
+                            onChange={(e) =>
+                              setOverrideAmount(e.target.value === "" ? "" : Number(e.target.value))
+                            }
+                            placeholder={`Section: ${sectionAmount}`}
+                            className="num h-8 w-28 rounded-md border border-input bg-background px-2 text-sm outline-none focus:border-primary"
+                          />
+                          <button
+                            onClick={() => handleSaveOverride(cls.id)}
+                            className="h-8 rounded-md bg-primary px-2 text-xs font-semibold text-primary-foreground"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingClassId(null);
+                              setOverrideAmount("");
+                            }}
+                            className="text-muted-foreground"
+                          >
+                            <X className="size-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          {hasOverride ? (
+                            <>
+                              <Money
+                                value={assignment!.amountOverride!}
+                                className="font-semibold"
+                              />
+                              <button
+                                onClick={() => {
+                                  setEditingClassId(cls.id);
+                                  setOverrideAmount(assignment!.amountOverride!);
+                                }}
+                                className="text-muted-foreground hover:text-foreground"
+                              >
+                                <Pencil className="size-3" />
+                              </button>
+                              <button
+                                onClick={() => handleSaveOverride(cls.id)}
+                                className="text-xs text-muted-foreground hover:text-destructive"
+                              >
+                                Remove
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-muted-foreground">—</span>
+                              <button
+                                onClick={() => {
+                                  setEditingClassId(cls.id);
+                                  setOverrideAmount("");
+                                }}
+                                className="text-xs font-semibold text-primary hover:underline"
+                              >
+                                Add override
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <input
+                        type="checkbox"
+                        checked={isActive}
+                        onChange={(e) =>
+                          handleToggleActive(cls.id, assignment ?? undefined, e.target.checked)
+                        }
+                        className="size-4 accent-[color:var(--primary)]"
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

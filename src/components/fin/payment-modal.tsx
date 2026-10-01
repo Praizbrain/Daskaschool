@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronLeft, Plus, Printer, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { useStudents } from "@/hooks/use-students";
@@ -19,6 +20,7 @@ type FeeEntry = {
   allowInstallment: boolean;
   isCustom: boolean;
   customLabel: string;
+  inventoryItemId?: string;
 };
 type Receipt = { receiptNo: string };
 
@@ -39,11 +41,13 @@ export function PaymentModal({ isOpen, studentId: initialStudentId, onClose }: P
   const { data: students = [], isLoading: studentsLoading } = useStudents();
   const { profile } = useAuth();
   const recordPayment = useRecordPayment();
+  const queryClient = useQueryClient();
   const [stage, setStage] = useState(1);
   const [studentId, setStudentId] = useState<string | null>(initialStudentId);
   const [search, setSearch] = useState("");
   const [items, setItems] = useState<PaymentItem[]>([]);
   const [loadingItems, setLoadingItems] = useState(false);
+  const [classId, setClassId] = useState<string | null>(null);
   const [fees, setFees] = useState<FeeEntry[]>([newFeeEntry()]);
   const [method, setMethod] = useState<Method | null>(null);
   const [reminderOn, setReminderOn] = useState(false);
@@ -98,7 +102,9 @@ export function PaymentModal({ isOpen, studentId: initialStudentId, onClose }: P
           setItems([]);
           return;
         }
-        setItems(await fetchStudentPaymentItems(data.class_id, student.section));
+        setClassId(data.class_id);
+        const feeItems = await fetchStudentPaymentItems(data.class_id, student.section);
+        setItems(feeItems);
       } catch (error) {
         console.error("[PaymentModal/loadItems]", error);
         toast.error("Couldn't load this student's fees. Please try again.");
@@ -134,6 +140,7 @@ export function PaymentModal({ isOpen, studentId: initialStudentId, onClose }: P
         amount: item.amount,
         allowInstallment: item.allowInstallment,
         isCustom: false,
+        inventoryItemId: item.inventoryItemId,
       });
   };
   const review = () => {
@@ -168,6 +175,30 @@ export function PaymentModal({ isOpen, studentId: initialStudentId, onClose }: P
         },
         receivedBy: profile.id,
       });
+      const inventoryFees = paidFees.filter((fee) => fee.inventoryItemId);
+      await Promise.all(
+        inventoryFees.map(async (fee) => {
+          const { error: stockError } = await supabase.rpc("decrement_stock", {
+            item_id: fee.inventoryItemId,
+            qty: 1,
+          });
+          if (stockError) throw stockError;
+          const { error: transactionError } = await supabase.from("inventory_transactions").insert({
+            inventory_item_id: fee.inventoryItemId,
+            transaction_type: "sale",
+            quantity: -1,
+            reference_id: saved.id,
+            recorded_by: profile.id,
+          });
+          if (transactionError) throw transactionError;
+        }),
+      );
+      if (inventoryFees.length) {
+        queryClient.invalidateQueries({ queryKey: ["inventory-items"] });
+        queryClient.invalidateQueries({ queryKey: ["inventory-summary"] });
+        queryClient.invalidateQueries({ queryKey: ["inventory-transactions"] });
+        if (classId) queryClient.invalidateQueries({ queryKey: ["class-inventory", classId] });
+      }
       if (reminderOn) {
         const { error } = await supabase.from("payment_reminders").insert({
           student_id: student.id,
@@ -294,8 +325,15 @@ export function PaymentModal({ isOpen, studentId: initialStudentId, onClose }: P
                             >
                               <option value="">Select fee to pay for</option>
                               {items.map((item) => (
-                                <option key={item.id} value={item.id}>
+                                <option key={item.id} value={item.id} disabled={item.isOutOfStock}>
                                   {item.label} ({naira(item.amount)})
+                                  {item.source === "inventory"
+                                    ? item.isOutOfStock
+                                      ? " • Out of stock"
+                                      : item.isRequired
+                                        ? " • Required inventory"
+                                        : " • Inventory"
+                                    : ""}
                                 </option>
                               ))}
                               <option value="custom">Custom fee</option>
