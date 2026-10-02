@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { GlobalSearchBar } from "@/components/fin/search-bar";
 import type { ReactNode } from "react";
 import { useCallback, useState } from "react";
@@ -8,6 +8,7 @@ import {
   ChevronDown,
   GraduationCap,
   LayoutDashboard,
+  LayoutGrid,
   LogOut,
   Menu,
   Receipt,
@@ -302,6 +303,7 @@ function TopBar({
   onToggleDesktopSidebar: () => void;
   onSignOut: () => void;
 }) {
+  const navigate = useNavigate();
   const { resolvedTheme, toggleTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
   return (
@@ -334,6 +336,15 @@ function TopBar({
         </div>
         <div className="flex items-center gap-2 sm:gap-3 ml-auto md:ml-0">
           <ThemeToggle className="size-10 sm:size-11 shrink-0" />
+          <button
+            type="button"
+            onClick={() => navigate({ to: "/hub" })}
+            className="flex size-10 sm:size-11 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="Platform Hub"
+            title="Platform Hub"
+          >
+            <LayoutGrid className="size-[18px]" />
+          </button>{" "}
           <button
             type="button"
             className="relative flex size-10 sm:size-11 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"

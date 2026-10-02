@@ -65,7 +65,7 @@ function LoginPage() {
         return;
       }
 
-      navigate({ to: "/dashboard" });
+      navigate({ to: "/hub" });
     } catch (err) {
       console.error("[routes/index/onSubmit]", err);
       setAuthError("Something went wrong signing you in. Please try again.");
