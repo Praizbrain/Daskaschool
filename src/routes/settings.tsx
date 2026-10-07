@@ -346,21 +346,21 @@ function FeeTemplatesTab() {
                 </div>
               ))}
               {adding === section && (
-                <div className="flex items-center gap-3 px-6 py-4">
+                <div className="flex flex-wrap items-center gap-3 px-6 py-4">
                   <input
                     value={newLabel}
                     onChange={(e) => setNewLabel(e.target.value)}
                     placeholder="Item label e.g. Uniform"
-                    className="h-10 flex-1 rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary"
+                    className="h-10 min-w-[180px] flex-1 rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary"
                   />
                   <input
                     type="number"
                     value={newAmount}
                     onChange={(e) => setNewAmount(e.target.value)}
                     placeholder="Amount (₦)"
-                    className="num h-10 w-32 rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary"
+                    className="num h-10 min-w-[120px] rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-primary"
                   />
-                  <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <label className="flex w-full items-center gap-2 text-xs text-muted-foreground sm:w-auto">
                     <input
                       type="checkbox"
                       checked={newAllowInstallment}
@@ -369,15 +369,17 @@ function FeeTemplatesTab() {
                     />
                     Allow installment
                   </label>
-                  <button
-                    onClick={() => handleAdd(section)}
-                    className="h-10 rounded-md bg-primary px-3 text-sm font-semibold text-primary-foreground"
-                  >
-                    Add
-                  </button>
-                  <button onClick={() => setAdding(null)} className="text-muted-foreground">
-                    <X className="size-4" />
-                  </button>
+                  <div className="ml-auto flex items-center gap-3">
+                    <button
+                      onClick={() => handleAdd(section)}
+                      className="h-10 rounded-md bg-primary px-3 text-sm font-semibold text-primary-foreground"
+                    >
+                      Add
+                    </button>
+                    <button onClick={() => setAdding(null)} className="text-muted-foreground">
+                      <X className="size-4" />
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

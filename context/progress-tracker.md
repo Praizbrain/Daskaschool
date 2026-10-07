@@ -8,7 +8,7 @@ know what is done, what is in progress, and what is next.
 ## Current Status
 
 **Phase:** Phase 1 — Foundation, in progress.
-**Last completed:** Fee template and inventory payment wiring update, build verified. Live browser verification remains pending.
+**Last completed:** Fee template Add item form mobile layout fix. Type checking is presently blocked by a pre-existing root error-route type mismatch.
 **Next:** Database Setup — create tables, trigger, RLS policies, seed real school data.
 
 ---

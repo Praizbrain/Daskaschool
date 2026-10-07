@@ -49,3 +49,8 @@ path, props shape, and any non-obvious behavior.
 
 - **File**: `src/routes/inventory.tsx`
 - **Behavior**: Keeps the fixed reporting categories and supports a named custom category through Other. The stored category remains Other and the user supplied name is kept in the item variant data.
+
+### FeeTemplatesTab Add Item Form
+
+- **File**: `src/routes/settings.tsx` (`FeeTemplatesTab`).
+- **Behavior**: The inline item form wraps below the 640px breakpoint; label and amount inputs retain 180px and 120px minimum widths, the installment option takes a full mobile row, and Add/close actions stay grouped at the right.
