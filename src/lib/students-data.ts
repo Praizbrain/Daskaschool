@@ -267,3 +267,32 @@ export async function removeStudent(studentId: string): Promise<"deleted" | "arc
   if (error) throw error;
   return "deleted";
 }
+
+export type UpdateStudentInput = {
+  fullName: string;
+  classId: string;
+  guardianName: string;
+  guardianPhone: string;
+  gender: string;
+  dob: string;
+  address: string;
+};
+
+export async function updateStudent(
+  id: string,
+  input: UpdateStudentInput,
+): Promise<void> {
+  const { error } = await supabase
+    .from("students")
+    .update({
+      full_name: input.fullName,
+      class_id: input.classId,
+      guardian_name: input.guardianName || null,
+      guardian_phone: input.guardianPhone || null,
+      gender: input.gender || null,
+      dob: input.dob || null,
+      address: input.address || null,
+    })
+    .eq("id", id);
+  if (error) throw error;
+}

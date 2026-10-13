@@ -1,7 +1,11 @@
 import { PageLoadingSkeleton } from "@/components/fin/loading-skeleton";
 import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
+import * as React from "react";
 import { useState } from "react";
-import { AlertTriangle, ArrowLeft, Phone, Plus, Receipt, Trash2, X } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { AlertTriangle, ArrowLeft, Check, Phone, Plus, Receipt, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/fin/app-shell";
 import {
@@ -17,7 +21,14 @@ import {
 import { naira, pct } from "@/lib/school-data";
 import { useAuth } from "@/hooks/use-auth";
 import { usePaymentModal } from "@/context/payment-modal-context";
-import { useRemoveStudent, useStudent, useStudentPayments } from "@/hooks/use-students";
+import {
+  useClassOptions,
+  useRemoveStudent,
+  useStudent,
+  useStudentPayments,
+  useUpdateStudent,
+} from "@/hooks/use-students";
+import type { ClassOption } from "@/lib/students-data";
 
 export const Route = createFileRoute("/students/$studentId")({
   head: () => ({
@@ -32,7 +43,7 @@ export const Route = createFileRoute("/students/$studentId")({
   component: StudentProfile,
 });
 
-const TABS = ["Overview", "Payments"] as const;
+const TABS = ["Overview", "Edit", "Payments"] as const;
 
 function StudentProfile() {
   const { openPaymentModal } = usePaymentModal();
@@ -42,6 +53,7 @@ function StudentProfile() {
   const { profile } = useAuth();
   const [tab, setTab] = useState<(typeof TABS)[number]>("Overview");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const { data: classOptions } = useClassOptions();
 
   const isSuperAdmin = profile?.role === "super_admin";
 
@@ -185,6 +197,27 @@ function StudentProfile() {
               </dl>
             </Panel>
           </div>
+        )}
+
+        {tab === "Edit" && (
+          <EditStudentForm
+            studentId={studentId}
+            defaultValues={{
+              fullName: student.name,
+              classId: student.id
+                ? (classOptions?.find(
+                    (c) => c.name === student.className && c.section === student.section,
+                  )?.id ?? "")
+                : "",
+              gender: student.gender ?? "",
+              dob: student.dob ?? "",
+              address: student.address ?? "",
+              guardianName: student.guardian === "—" ? "" : student.guardian,
+              guardianPhone: student.guardianPhone === "—" ? "" : student.guardianPhone,
+            }}
+            classOptions={classOptions ?? []}
+            onSaved={() => setTab("Overview")}
+          />
         )}
 
         {tab === "Payments" && (
@@ -394,3 +427,173 @@ function SummaryTile({
     </div>
   );
 }
+
+// ─── Edit student form ────────────────────────────────────────────────────────
+
+const editSchema = z.object({
+  fullName: z.string().min(1, "Required"),
+  classId: z.string().min(1, "Select a class"),
+  gender: z.string().optional(),
+  dob: z.string().optional(),
+  address: z.string().optional(),
+  guardianName: z.string().optional(),
+  guardianPhone: z.string().optional(),
+});
+
+type EditFormValues = z.infer<typeof editSchema>;
+
+function EditStudentForm({
+  studentId,
+  defaultValues,
+  classOptions,
+  onSaved,
+}: {
+  studentId: string;
+  defaultValues: EditFormValues;
+  classOptions: ClassOption[];
+  onSaved: () => void;
+}) {
+  const updateStudent = useUpdateStudent(studentId);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<EditFormValues>({
+    resolver: zodResolver(editSchema),
+    defaultValues,
+  });
+
+  const onSubmit = async (values: EditFormValues) => {
+    try {
+      await updateStudent.mutateAsync({
+        fullName: values.fullName,
+        classId: values.classId,
+        guardianName: values.guardianName ?? "",
+        guardianPhone: values.guardianPhone ?? "",
+        gender: values.gender ?? "",
+        dob: values.dob ?? "",
+        address: values.address ?? "",
+      });
+      toast.success("Student updated");
+      onSaved();
+    } catch (err) {
+      console.error("[students.$studentId/EditStudentForm/onSubmit]", err);
+      toast.error("Couldn't save changes. Please try again.");
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <Panel title="Student information" bodyClassName="p-8">
+        <div className="grid gap-6 sm:grid-cols-2">
+          <EditField
+            label="Full name"
+            error={errors.fullName?.message}
+            {...register("fullName")}
+            placeholder="Chiamaka Okonkwo"
+          />
+          <EditSelectField
+            label="Gender"
+            {...register("gender")}
+            options={["", "Female", "Male"]}
+          />
+          <EditField label="Date of birth" type="date" {...register("dob")} />
+          <div className="sm:col-span-2">
+            <EditField
+              label="Home address"
+              {...register("address")}
+              placeholder="Ketu, Lagos"
+            />
+          </div>
+        </div>
+      </Panel>
+
+      <Panel title="Guardian details" bodyClassName="p-8">
+        <div className="grid gap-6 sm:grid-cols-2">
+          <EditField
+            label="Guardian full name"
+            {...register("guardianName")}
+            placeholder="Mr. Emeka Okonkwo"
+          />
+          <EditField
+            label="Phone number"
+            {...register("guardianPhone")}
+            placeholder="+234 803 000 0000"
+          />
+        </div>
+      </Panel>
+
+      <Panel title="Class" bodyClassName="p-8">
+        <label className="block">
+          <span className="text-sm font-semibold">Class</span>
+          <select
+            {...register("classId")}
+            className="mt-2 h-12 w-full rounded-md border border-input bg-background px-4 text-sm outline-none transition-colors focus:border-primary"
+          >
+            <option value="">Select a class</option>
+            {classOptions.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} ({c.section})
+              </option>
+            ))}
+          </select>
+          {errors.classId && (
+            <p className="mt-1.5 text-xs text-destructive">{errors.classId.message}</p>
+          )}
+        </label>
+      </Panel>
+
+      <div className="flex justify-end">
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex h-12 items-center gap-2 rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary-deep disabled:opacity-60"
+        >
+          <Check className="size-4" />
+          {isSubmitting ? "Saving…" : "Save changes"}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+const EditField = React.forwardRef<
+  HTMLInputElement,
+  { label: string; error?: string } & React.InputHTMLAttributes<HTMLInputElement>
+>(function EditField({ label, error, ...props }, ref) {
+  return (
+    <label className="block">
+      <span className="text-sm font-semibold">{label}</span>
+      <input
+        ref={ref}
+        {...props}
+        className="mt-2 h-12 w-full rounded-md border border-input bg-background px-4 text-sm outline-none transition-colors focus:border-primary"
+      />
+      {error && <p className="mt-1.5 text-xs text-destructive">{error}</p>}
+    </label>
+  );
+});
+
+const EditSelectField = React.forwardRef<
+  HTMLSelectElement,
+  { label: string; options: string[] } & React.SelectHTMLAttributes<HTMLSelectElement>
+>(function EditSelectField({ label, options, ...props }, ref) {
+  return (
+    <label className="block">
+      <span className="text-sm font-semibold">{label}</span>
+      <select
+        ref={ref}
+        {...props}
+        className="mt-2 h-12 w-full rounded-md border border-input bg-background px-4 text-sm outline-none transition-colors focus:border-primary"
+      >
+        {options.map((o) => (
+          <option key={o} value={o}>
+            {o || "—"}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+});
+

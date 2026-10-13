@@ -8,7 +8,7 @@ know what is done, what is in progress, and what is next.
 ## Current Status
 
 **Phase:** Phase 1 — Foundation, in progress.
-**Last completed:** Fee template Add item form mobile layout fix. Type checking is presently blocked by a pre-existing root error-route type mismatch.
+**Last completed:** Edit Student tab added to student profile (2026-10-13). Type checking still blocked by the pre-existing `__root.tsx` error-route type mismatch (not introduced by our changes).
 **Next:** Database Setup — create tables, trigger, RLS policies, seed real school data.
 
 ---

@@ -6,7 +6,9 @@ import {
   fetchStudentPayments,
   fetchStudents,
   removeStudent,
+  updateStudent,
   type CreateStudentInput,
+  type UpdateStudentInput,
 } from "@/lib/students-data";
 
 export function useStudents() {
@@ -47,6 +49,17 @@ export function useRemoveStudent() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["students"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
+export function useUpdateStudent(studentId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: UpdateStudentInput) => updateStudent(studentId, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["student", studentId] });
+      queryClient.invalidateQueries({ queryKey: ["students"] });
     },
   });
 }
