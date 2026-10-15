@@ -21,6 +21,7 @@ import { usePaymentModal } from "@/context/payment-modal-context";
 export const Route = createFileRoute("/students/")({
   validateSearch: z.object({
     q: z.string().optional(),
+    klass: z.string().optional(),
   }),
   head: () => ({
     meta: [
@@ -49,8 +50,13 @@ function StudentsPage() {
       setQuery(searchParams.q);
     }
   }, [searchParams.q]);
+  useEffect(() => {
+    if (searchParams.klass !== undefined) {
+      setKlass(searchParams.klass);
+    }
+  }, [searchParams.klass]);
   const [status, setStatus] = useState<(typeof STATUSES)[number]>("All");
-  const [klass, setKlass] = useState("All classes");
+  const [klass, setKlass] = useState(searchParams.klass || "All classes");
   const [page, setPage] = useState(1);
 
   const classOptions = useMemo(() => {

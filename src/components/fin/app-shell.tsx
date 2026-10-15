@@ -33,6 +33,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useSchoolSettings } from "@/hooks/use-settings";
 import { useTheme } from "@/lib/theme-provider";
 import { ThemeToggle } from "@/components/fin/theme-toggle";
+import { NotificationPanel } from "@/components/fin/notification-panel";
+import { useNotifications } from "@/hooks/use-notifications";
 import { InitialAvatar, StatusBadge } from "@/components/fin/primitives";
 import {
   DropdownMenu,
@@ -80,9 +82,13 @@ function StaffIdCopyRow({ staffId }: { staffId: string }) {
 export function AppShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { profile, email, loading, signOut } = useAuth();
   const { data: schoolData } = useSchoolSettings();
+  const { data: notifications } = useNotifications();
+  const urgentCount =
+    (notifications?.totalRemindersdue ?? 0) + (notifications?.totalNoPayStudents ?? 0);
   const isSuperAdmin = profile?.role === "super_admin";
   const visibleNav = NAV.filter((item) => !item.superAdminOnly || isSuperAdmin);
   if (loading) {
@@ -270,7 +276,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           onOpenMobileNav={() => setMobileNavOpen(true)}
           onToggleDesktopSidebar={() => setCollapsed((c) => !c)}
           onSignOut={signOut}
+          urgentCount={urgentCount}
+          onOpenNotifications={() => setNotifOpen(true)}
         />
+        <NotificationPanel isOpen={notifOpen} onClose={() => setNotifOpen(false)} />
         <main className="mx-auto w-full max-w-[1440px] flex-1 px-6 py-8 lg:px-10 lg:py-10">
           {children}
         </main>
@@ -290,6 +299,8 @@ function TopBar({
   onOpenMobileNav,
   onToggleDesktopSidebar,
   onSignOut,
+  urgentCount,
+  onOpenNotifications,
 }: {
   isSuperAdmin: boolean;
   name: string;
@@ -302,6 +313,8 @@ function TopBar({
   onOpenMobileNav: () => void;
   onToggleDesktopSidebar: () => void;
   onSignOut: () => void;
+  urgentCount: number;
+  onOpenNotifications: () => void;
 }) {
   const navigate = useNavigate();
   const { resolvedTheme, toggleTheme } = useTheme();
@@ -347,11 +360,17 @@ function TopBar({
           </button>{" "}
           <button
             type="button"
+            onClick={onOpenNotifications}
             className="relative flex size-10 sm:size-11 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             aria-label="Notifications"
+            aria-haspopup="dialog"
           >
             <Bell className="size-[18px]" />
-            <span className="absolute right-2.5 top-2.5 size-2 rounded-full bg-destructive" />
+            {urgentCount > 0 && (
+              <span className="absolute right-1.5 top-1.5 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
+                {urgentCount > 9 ? "9+" : urgentCount}
+              </span>
+            )}
           </button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
