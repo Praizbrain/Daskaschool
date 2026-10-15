@@ -278,10 +278,7 @@ export type UpdateStudentInput = {
   address: string;
 };
 
-export async function updateStudent(
-  id: string,
-  input: UpdateStudentInput,
-): Promise<void> {
+export async function updateStudent(id: string, input: UpdateStudentInput): Promise<void> {
   const { error } = await supabase
     .from("students")
     .update({

@@ -94,7 +94,7 @@ function StudentsPage() {
   if (error || !students) {
     return (
       <AppShell>
-        <div className="flex min-h-[300px] flex-col items-center justify-center gap-2 text-center">
+        <div className="flex min-h-75 flex-col items-center justify-center gap-2 text-center">
           <p className="text-sm font-semibold text-destructive">Couldn't load students.</p>
           <p className="text-xs text-muted-foreground">Please refresh the page.</p>
         </div>
@@ -127,7 +127,7 @@ function StudentsPage() {
 
       <Panel className="mt-8" bodyClassName="p-5">
         <div className="flex flex-wrap items-center gap-3">
-          <label className="relative flex h-11 min-w-[260px] flex-1 items-center">
+          <label className="relative flex h-11 min-w-65 flex-1 items-center">
             <Search className="pointer-events-none absolute left-3.5 size-4 text-muted-foreground" />
             <input
               value={query}
@@ -211,7 +211,7 @@ function StudentsPage() {
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-sm">
+            <table className="w-full min-w-225 text-sm">
               <thead>
                 <tr className="border-b border-border text-left">
                   {["Student", "Class", "Guardian", "Outstanding balance", "Status", ""].map(
